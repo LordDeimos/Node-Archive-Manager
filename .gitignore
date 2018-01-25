@@ -26,3 +26,9 @@
 *.exe
 *.out
 *.app
+
+# Custom
+build/
+.vscode/
+*.log
+node_modules/

@@ -1,1 +1,2 @@
-Node-7z
+* Node-Archive-Manager
+A Node.js plugin to manipulate archive files using C++
