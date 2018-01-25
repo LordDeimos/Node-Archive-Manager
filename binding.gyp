@@ -1,8 +1,14 @@
 {
     "targets": [
         {
-            "target_name": "hello",
-            "sources": ["test-zip.cpp"]
+            "target_name": "view",
+            "sources": ["main.cpp"],
+            "include_dirs": [
+                "./lib"
+            ],
+            "libraries": [
+                "-llibarchive"
+            ],
         }
     ]
 }
