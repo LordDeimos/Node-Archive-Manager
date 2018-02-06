@@ -1,3 +1,4 @@
+#include <string.h>
 #include <node.h>
 #include <archive.h>
 #include <archive_entry.h>
@@ -46,6 +47,43 @@ Local<Array> view(Local<String> path, Isolate* isolate){
   return array;
 }
 
+Local<Object> info(Local<String> fileName, Local<String> archivePath, Isolate* isolate){
+  archive_t archive;
+  archive_entry_t entry;
+  int r;
+  archive = archive_read_new();
+  archive_read_support_filter_all(archive);
+  archive_read_support_format_all(archive);
+
+  String::Utf8Value file(archivePath);
+  String::Utf8Value internalFile(fileName);
+
+  Local<Object> object = Object::New(isolate);
+  r = archive_read_open_filename(archive, *file, 10240);
+  if (r != ARCHIVE_OK){
+    isolate->ThrowException(Exception::TypeError(
+      String::NewFromUtf8(isolate,"Error Opening Archive")));
+      return Object::New(isolate);
+  }
+  printf("%s\n",*internalFile);
+  while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
+    if(!strcmp(archive_entry_pathname(entry),*internalFile)){
+      object->Set(String::NewFromUtf8(isolate,"name"),String::NewFromUtf8(isolate,archive_entry_pathname(entry)));
+      object->Set(String::NewFromUtf8(isolate,"size"),Number::New(isolate,archive_entry_size(entry)));
+      break;
+    }
+  }
+
+  r = archive_read_free(archive);
+
+  if (r != ARCHIVE_OK){    
+    isolate->ThrowException(Exception::TypeError(
+      String::NewFromUtf8(isolate,"Error Closing Archive")));
+      return Object::New(isolate);
+  }
+  return object;
+}
+
 #pragma endregion
 
 #pragma region Wrappers
@@ -54,12 +92,22 @@ void ListContent(const FunctionCallbackInfo<Value>& args) {
   Isolate* isolate = args.GetIsolate();
 
   if(args.Length()!=1){
-    isolate->ThrowException(Exception::TypeError(
+    isolate->ThrowException(Exception::SyntaxError(
       String::NewFromUtf8(isolate,"This Takes One Argument")));
       return;
   }
-  view(args[0]->ToString(),isolate);
   args.GetReturnValue().Set(view(args[0]->ToString(),isolate));
+}
+
+void GetInfo(const FunctionCallbackInfo<Value>& args){
+  Isolate* isolate = args.GetIsolate();
+  if(args.Length()!=2){
+    isolate->ThrowException(Exception::SyntaxError(
+      String::NewFromUtf8(isolate,"Requires two arguments")
+    ));
+    return;
+  }
+  args.GetReturnValue().Set(info(args[0]->ToString(),args[1]->ToString(),isolate));
 }
 #pragma endregion
 
@@ -68,8 +116,8 @@ void ListContent(const FunctionCallbackInfo<Value>& args) {
 void init(Local<Object> exports) {
   Isolate* isolate = exports->GetIsolate();
 
-  //Set ListContent function
   exports->Set(String::NewFromUtf8(isolate,"ListContent"),FunctionTemplate::New(isolate,ListContent)->GetFunction());
+  exports->Set(String::NewFromUtf8(isolate,"GetInfo"),FunctionTemplate::New(isolate,GetInfo)->GetFunction());
 
 }
 

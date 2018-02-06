@@ -1,3 +1,4 @@
-const hello = require('./build/Release/archive_manager');
+const ArchiveManager = require('./build/Debug/archive_manager');
 
-console.log(hello.ListContent('./test7.cb7'));
+console.log(ArchiveManager.ListContent('./test7.cb7'));
+console.log(ArchiveManager.GetInfo('ComicInfo.xml','./test7.cb7'));
