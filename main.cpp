@@ -2,26 +2,16 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-namespace demo {
+namespace archive_manager {
 
-using v8::Exception;
-using v8::FunctionCallbackInfo;
-using v8::Isolate;
-using v8::Local;
-using v8::Object;
-using v8::Number;
-using v8::String;
-using v8::Value;
+using namespace v8;
 
 typedef struct archive* archive_t;
 typedef struct archive_entry* archive_entry_t;
 
-const char* ToCString(Local<String> str) {
-  String::Utf8Value value(str);
-  return *value ? *value : "<string conversion failed>";
-}
+#pragma region Helpers
 
-void view(Local<String> path, Isolate* isolate){
+Local<Array> view(Local<String> path, Isolate* isolate){
   archive_t archive;
   archive_entry_t entry;
   int r;
@@ -31,25 +21,36 @@ void view(Local<String> path, Isolate* isolate){
   archive_read_support_format_all(archive);
 
   String::Utf8Value file(path);
+  Local<Array> array = Array::New(isolate);
 
-  printf("%s\n",*file);
   r = archive_read_open_filename(archive, *file, 10240);
-  if (r != ARCHIVE_OK)
-    printf("Error 1\n");
-
+  if (r != ARCHIVE_OK){
+    isolate->ThrowException(Exception::TypeError(
+      String::NewFromUtf8(isolate,"Error Opening Archive")));
+      return Array::New(isolate);
+  }
+  int i=0;
   while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
-    printf("%s\n",archive_entry_pathname(entry));
-    archive_read_data_skip(archive);  // Note 2
+    array->Set(i,String::NewFromUtf8(isolate,archive_entry_pathname(entry)));
+    archive_read_data_skip(archive);
+    i++;
   }
 
   r = archive_read_free(archive);
 
-  if (r != ARCHIVE_OK)
-    printf("Error 2\n");
-
+  if (r != ARCHIVE_OK){    
+    isolate->ThrowException(Exception::TypeError(
+      String::NewFromUtf8(isolate,"Error Closing Archive")));
+      return Array::New(isolate);
+  }
+  return array;
 }
 
-void Method(const FunctionCallbackInfo<Value>& args) {
+#pragma endregion
+
+#pragma region Wrappers
+
+void ListContent(const FunctionCallbackInfo<Value>& args) {
   Isolate* isolate = args.GetIsolate();
 
   if(args.Length()!=1){
@@ -58,13 +59,22 @@ void Method(const FunctionCallbackInfo<Value>& args) {
       return;
   }
   view(args[0]->ToString(),isolate);
-  args.GetReturnValue().Set(String::NewFromUtf8(isolate,"Printed to stdout"));
+  args.GetReturnValue().Set(view(args[0]->ToString(),isolate));
 }
+#pragma endregion
+
+#pragma region Node
 
 void init(Local<Object> exports) {
-  NODE_SET_METHOD(exports, "view", Method);
+  Isolate* isolate = exports->GetIsolate();
+
+  //Set ListContent function
+  exports->Set(String::NewFromUtf8(isolate,"ListContent"),FunctionTemplate::New(isolate,ListContent)->GetFunction());
+
 }
 
-NODE_MODULE(NODE_GYP_MODULE_NAME, init)
+NODE_MODULE(NODE_GYP_MODULE_NAME, init);
+
+#pragma endregion
 
 }

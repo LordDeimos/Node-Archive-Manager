@@ -1,7 +1,7 @@
 {
     "targets": [
         {
-            "target_name": "view",
+            "target_name": "archive_manager",
             "sources": ["main.cpp"],
             'conditions': [
                 ['OS=="win"', {

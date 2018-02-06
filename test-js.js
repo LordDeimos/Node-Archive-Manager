@@ -1,2 +1,3 @@
-const hello = require('./build/Debug/view');
-console.log(hello.view('./test7.cb7'));
+const hello = require('./build/Release/archive_manager');
+
+console.log(hello.ListContent('./test7.cb7'));
