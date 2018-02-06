@@ -1,6 +1,6 @@
 #include <node.h>
-#include "./lib/archive.h"
-#include "./lib/archive_entry.h"
+#include <archive.h>
+#include <archive_entry.h>
 
 namespace demo {
 
@@ -13,29 +13,40 @@ using v8::Number;
 using v8::String;
 using v8::Value;
 
+typedef struct archive* archive_t;
+typedef struct archive_entry* archive_entry_t;
+
 const char* ToCString(Local<String> str) {
   String::Utf8Value value(str);
   return *value ? *value : "<string conversion failed>";
 }
 
 void view(Local<String> path, Isolate* isolate){
-  struct archive *a;
-  struct archive_entry *entry;
+  archive_t archive;
+  archive_entry_t entry;
   int r;
 
-  a = archive_read_new();
-  archive_read_support_filter_all(a);
-  archive_read_support_format_all(a);
-  r = archive_read_open_filename(a, ToCString(path), 10240); // Note 1
+  archive = archive_read_new();
+  archive_read_support_filter_all(archive);
+  archive_read_support_format_all(archive);
+
+  String::Utf8Value file(path);
+
+  printf("%s\n",*file);
+  r = archive_read_open_filename(archive, *file, 10240);
   if (r != ARCHIVE_OK)
-    return;
-  while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
-    printf("%s\\n",archive_entry_pathname(entry));
-    archive_read_data_skip(a);  // Note 2
+    printf("Error 1\n");
+
+  while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
+    printf("%s\n",archive_entry_pathname(entry));
+    archive_read_data_skip(archive);  // Note 2
   }
-  r = archive_read_free(a);  // Note 3
+
+  r = archive_read_free(archive);
+
   if (r != ARCHIVE_OK)
-    return;
+    printf("Error 2\n");
+
 }
 
 void Method(const FunctionCallbackInfo<Value>& args) {
@@ -43,7 +54,7 @@ void Method(const FunctionCallbackInfo<Value>& args) {
 
   if(args.Length()!=1){
     isolate->ThrowException(Exception::TypeError(
-      String::NewFromUtf8(isolate,"This Only Takes One Arguments")));
+      String::NewFromUtf8(isolate,"This Takes One Argument")));
       return;
   }
   view(args[0]->ToString(),isolate);

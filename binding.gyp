@@ -3,12 +3,23 @@
         {
             "target_name": "view",
             "sources": ["main.cpp"],
-            "include_dirs": [
-                "./lib"
-            ],
-            "libraries": [
-                "-llibarchive"
-            ],
+            'conditions': [
+                ['OS=="win"', {
+                'include_dirs': [
+                    "./lib"
+                ],
+                'libraries': [
+                    "../lib/archive.exp",
+                    "../lib/archive.lib",
+                    "../lib/archive_static.lib"
+                ],
+                }],
+                ['OS=="linux"',{
+                    'libraries':[
+                        "-larchive"
+                    ]
+                }]
+            ]
         }
     ]
 }
