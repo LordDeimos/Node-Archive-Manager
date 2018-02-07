@@ -86,12 +86,12 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath, Isolate* i
 
 Local<Boolean> writeLocal(Local<String> fileName, Local<String> archivePath, Isolate* isolate){
   //This might take some doing
-  return False();
+  return Nan::False();
 }
 
 Local<Boolean> writeMemory(Local<String> file, Local<String> archivePath, Isolate* isolate){
   //This might take some more doing
-  return False();
+  return Nan::False();
 }
 
 /**
@@ -109,9 +109,8 @@ void ListContent(const Nan::FunctionCallbackInfo<Value>& args) {
   Isolate* isolate = args.GetIsolate();
 
   if(args.Length()!=1){
-    isolate->ThrowException(Exception::SyntaxError(
-      String::NewFromUtf8(isolate,"This Takes One Argument")));
-      return;
+    Nan::ThrowError("This Takes One Argument");
+    return;
   }
   args.GetReturnValue().Set(view(args[0]->ToString(),isolate));
 }
@@ -119,9 +118,7 @@ void ListContent(const Nan::FunctionCallbackInfo<Value>& args) {
 void GetInfo(const Nan::FunctionCallbackInfo<Value>& args){
   Isolate* isolate = args.GetIsolate();
   if(args.Length()!=2){
-    isolate->ThrowException(Exception::SyntaxError(
-      String::NewFromUtf8(isolate,"Requires two arguments")
-    ));
+    Nan::ThrowError("Requires two arguments");
     return;
   }
   args.GetReturnValue().Set(info(args[0]->ToString(),args[1]->ToString(),isolate));
