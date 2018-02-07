@@ -61,16 +61,15 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath, Isolate* i
   Local<Object> object = New<Object>();
   r = archive_read_open_filename(archive, *file, 10240);
   if (r != ARCHIVE_OK){
-    isolate->ThrowException(Exception::TypeError(
-      String::NewFromUtf8(isolate,"Error Opening Archive")));
-      return Object::New(isolate);
+    Nan::ThrowError("Error Opening Archive");
+    return New<Object>();
   }
   printf("%s\n",*internalFile);
   while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
     if(!strcmp(archive_entry_pathname(entry),*internalFile)){
-      object->Set(String::NewFromUtf8(isolate,"name"),String::NewFromUtf8(isolate,archive_entry_pathname(entry)));
-      object->Set(String::NewFromUtf8(isolate,"size"),Number::New(isolate,archive_entry_size(entry)));
-      object->Set(String::NewFromUtf8(isolate,"directory"),Boolean::New(isolate,archive_entry_filetype(entry)==AE_IFDIR));
+      Nan::Set(object,New<String>("name").ToLocalChecked(),New<String>(archive_entry_pathname(entry)).ToLocalChecked());
+      Nan::Set(object,New<String>("size").ToLocalChecked(),New<Number>(archive_entry_size(entry)));
+      Nan::Set(object,New<String>("directory").ToLocalChecked(),New<Boolean>(archive_entry_filetype(entry)==AE_IFDIR));
       //more?
       break;
     }
@@ -79,9 +78,8 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath, Isolate* i
   r = archive_read_free(archive);
 
   if (r != ARCHIVE_OK){    
-    isolate->ThrowException(Exception::TypeError(
-      String::NewFromUtf8(isolate,"Error Closing Archive")));
-      return Object::New(isolate);
+    Nan::ThrowError("Error Closing Archive");
+    return New<Object>();
   }
   return object;
 }
