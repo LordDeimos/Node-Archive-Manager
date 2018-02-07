@@ -2,5 +2,7 @@
   "name": "Node-Archive-Manager",
   "version": "0.1.0",
   "author": "Alex Barnier <alexjbarnier@gmail.com>",
-  "dependencies": {}
+  "dependencies": {
+    "nan": "^2.8.0"
+  }
 }

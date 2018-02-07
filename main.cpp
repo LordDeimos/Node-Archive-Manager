@@ -1,11 +1,13 @@
 #include <string.h>
-#include <node.h>
+#include <nan.h>
+
 #include <archive.h>
 #include <archive_entry.h>
 
 namespace archive_manager {
 
 using namespace v8;
+using namespace Nan;
 
 typedef struct archive* archive_t;
 typedef struct archive_entry* archive_entry_t;
@@ -58,7 +60,7 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath, Isolate* i
   String::Utf8Value file(archivePath);
   String::Utf8Value internalFile(fileName);
 
-  Local<Object> object = Object::New(isolate);
+  Local<Object> object = New<Object>();
   r = archive_read_open_filename(archive, *file, 10240);
   if (r != ARCHIVE_OK){
     isolate->ThrowException(Exception::TypeError(
@@ -88,12 +90,12 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath, Isolate* i
 
 Local<Boolean> writeLocal(Local<String> fileName, Local<String> archivePath, Isolate* isolate){
   //This might take some doing
-  return Boolean::new(isolate,false);
+  return False();
 }
 
-Local<Boolean> writeMemory(Local<Buffer> file, Local<String> archivePath, Isolate* isolate){
+Local<Boolean> writeMemory(Local<String> file, Local<String> archivePath, Isolate* isolate){
   //This might take some more doing
-  return Boolean::new(isolate,false);
+  return False();
 }
 
 /**
@@ -103,11 +105,11 @@ Local<Boolean> writeMemory(Local<Buffer> file, Local<String> archivePath, Isolat
  * - Remove file/folder from archive
 */
 
-#prag1ma endregion
+#pragma endregion
 
 #pragma region Wrappers
 
-void ListContent(const FunctionCallbackInfo<Value>& args) {
+void ListContent(const Nan::FunctionCallbackInfo<Value>& args) {
   Isolate* isolate = args.GetIsolate();
 
   if(args.Length()!=1){
@@ -118,7 +120,7 @@ void ListContent(const FunctionCallbackInfo<Value>& args) {
   args.GetReturnValue().Set(view(args[0]->ToString(),isolate));
 }
 
-void GetInfo(const FunctionCallbackInfo<Value>& args){
+void GetInfo(const Nan::FunctionCallbackInfo<Value>& args){
   Isolate* isolate = args.GetIsolate();
   if(args.Length()!=2){
     isolate->ThrowException(Exception::SyntaxError(
@@ -133,11 +135,17 @@ void GetInfo(const FunctionCallbackInfo<Value>& args){
 
 #pragma region Node
 
-void init(Local<Object> exports) {
-  Isolate* isolate = exports->GetIsolate();
+NAN_MODULE_INIT(init) {
+  /*Isolate* isolate = exports->GetIsolate();
 
   exports->Set(String::NewFromUtf8(isolate,"ListContent"),FunctionTemplate::New(isolate,ListContent)->GetFunction());
-  exports->Set(String::NewFromUtf8(isolate,"GetInfo"),FunctionTemplate::New(isolate,GetInfo)->GetFunction());
+  exports->Set(String::NewFromUtf8(isolate,"GetInfo"),FunctionTemplate::New(isolate,GetInfo)->GetFunction());*/
+
+  Nan::Set(target, New<String>("ListContent").ToLocalChecked(),
+    GetFunction(New<FunctionTemplate>(ListContent)).ToLocalChecked());
+
+  Nan::Set(target, New<String>("GetInfo").ToLocalChecked(),
+    GetFunction(New<FunctionTemplate>(GetInfo)).ToLocalChecked());
 
 }
 
