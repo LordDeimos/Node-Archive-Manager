@@ -24,17 +24,16 @@ Local<Array> view(Local<String> path, Isolate* isolate){
   archive_read_support_format_all(archive);
 
   String::Utf8Value file(path);
-  Local<Array> array = Array::New(isolate);
+  Local<Array> array = New<Array>();
 
   r = archive_read_open_filename(archive, *file, 10240);
   if (r != ARCHIVE_OK){
-    isolate->ThrowException(Exception::TypeError(
-      String::NewFromUtf8(isolate,"Error Opening Archive")));
-      return Array::New(isolate);
+    Nan::ThrowError("Error Opening Archive");
+    return New<Array>();
   }
   int i=0;
   while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
-    array->Set(i,String::NewFromUtf8(isolate,archive_entry_pathname(entry)));
+    Nan::Set(array,i,New<String>(archive_entry_pathname(entry)).ToLocalChecked());
     archive_read_data_skip(archive);
     i++;
   }
@@ -42,9 +41,8 @@ Local<Array> view(Local<String> path, Isolate* isolate){
   r = archive_read_free(archive);
 
   if (r != ARCHIVE_OK){    
-    isolate->ThrowException(Exception::TypeError(
-      String::NewFromUtf8(isolate,"Error Closing Archive")));
-      return Array::New(isolate);
+    Nan::ThrowError("Error Closing Archive");
+    return New<Array>();
   }
   return array;
 }
