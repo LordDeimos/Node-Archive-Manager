@@ -2,4 +2,6 @@ sudo: required
 language: node_js
 node_js: "0.10"
 
-before_install: "sudo apt-get install libarchive-dev"
+before_install: 
+  - "sudo apt-get install libarchive-dev"
+  - "npm install -g nodeunit"
