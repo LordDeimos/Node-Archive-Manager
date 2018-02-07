@@ -32,9 +32,4 @@ build/
 .vscode/
 *.log
 node_modules/
-*.zip
-*.7z
-*.rar
-*.cbz
-*.cb7
-*.cbr
+*.txt

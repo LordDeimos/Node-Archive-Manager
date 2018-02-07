@@ -64,7 +64,6 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath, Isolate* i
     Nan::ThrowError("Error Opening Archive");
     return New<Object>();
   }
-  printf("%s\n",*internalFile);
   while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
     if(!strcmp(archive_entry_pathname(entry),*internalFile)){
       Nan::Set(object,New<String>("name").ToLocalChecked(),New<String>(archive_entry_pathname(entry)).ToLocalChecked());
