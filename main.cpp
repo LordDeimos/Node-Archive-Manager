@@ -70,6 +70,8 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath, Isolate* i
     if(!strcmp(archive_entry_pathname(entry),*internalFile)){
       object->Set(String::NewFromUtf8(isolate,"name"),String::NewFromUtf8(isolate,archive_entry_pathname(entry)));
       object->Set(String::NewFromUtf8(isolate,"size"),Number::New(isolate,archive_entry_size(entry)));
+      object->Set(String::NewFromUtf8(isolate,"directory"),Boolean::New(isolate,archive_entry_filetype(entry)==AE_IFDIR));
+      //more?
       break;
     }
   }
@@ -84,7 +86,24 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath, Isolate* i
   return object;
 }
 
-#pragma endregion
+Local<Boolean> writeLocal(Local<String> fileName, Local<String> archivePath, Isolate* isolate){
+  //This might take some doing
+  return Boolean::new(isolate,false);
+}
+
+Local<Boolean> writeMemory(Local<Buffer> file, Local<String> archivePath, Isolate* isolate){
+  //This might take some more doing
+  return Boolean::new(isolate,false);
+}
+
+/**
+ * ToDo
+ * - Extract to/from disk
+ * - Create New archive
+ * - Remove file/folder from archive
+*/
+
+#prag1ma endregion
 
 #pragma region Wrappers
 
@@ -109,6 +128,7 @@ void GetInfo(const FunctionCallbackInfo<Value>& args){
   }
   args.GetReturnValue().Set(info(args[0]->ToString(),args[1]->ToString(),isolate));
 }
+
 #pragma endregion
 
 #pragma region Node
