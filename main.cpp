@@ -1,4 +1,6 @@
 #include <string.h>
+#include <iostream>
+#include <sstream>
 #include <nan.h>
 
 #include <archive.h>
@@ -12,9 +14,11 @@ using namespace Nan;
 typedef struct archive* archive_t;
 typedef struct archive_entry* archive_entry_t;
 
+std::vector<std::string> split(char* string, char delim);
+
 #pragma region Helpers
 
-Local<Array> view(Local<String> path, Isolate* isolate){
+Local<Array> view(Local<String> path){
   archive_t archive;
   archive_entry_t entry;
   int r;
@@ -47,7 +51,7 @@ Local<Array> view(Local<String> path, Isolate* isolate){
   return array;
 }
 
-Local<Object> info(Local<String> fileName, Local<String> archivePath, Isolate* isolate){
+Local<Object> info(Local<String> fileName, Local<String> archivePath){
   archive_t archive;
   archive_entry_t entry;
   int r;
@@ -83,20 +87,117 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath, Isolate* i
   return object;
 }
 
-Local<Boolean> writeLocal(Local<String> fileName, Local<String> archivePath, Isolate* isolate){
+Local<Boolean> writeLocal(Local<Array> files, Local<String> archivePath){
   //This might take some doing
-  return Nan::False();
+  archive_t archive;
+  archive_entry_t entry;
+  struct stat st;
+  char buff[8192];
+  int len;
+  int fd;
+  
+  String::Utf8Value file(archivePath);
+  
+  archive = archive_write_new();
+  archive_write_set_format_filter_by_ext(archive,*file);
+  if(archive_write_open_filename(archive, *file)!=ARCHIVE_OK){
+    return Nan::False();
+  }
+  for(int i=0;i<files->Length();i++){    
+    String::Utf8Value filename(files->Get(i));
+    std::vector<std::string> path = split(*filename,'/');  
+
+    const char * internalName = path.back().c_str();
+    stat(*filename, &st);
+    entry = archive_entry_new();
+
+    archive_entry_set_pathname(entry, internalName);
+    archive_entry_set_size(entry, st.st_size);
+    archive_entry_set_filetype(entry, AE_IFREG);
+    archive_entry_set_perm(entry, 0644);
+    archive_write_header(archive, entry);
+    fd = open(*filename, O_RDONLY);
+    len = read(fd, buff, sizeof(buff));
+    while ( len > 0 ) {
+      archive_write_data(archive, buff, len);
+      len = read(fd, buff, sizeof(buff));
+    }
+    close(fd);
+    archive_entry_free(entry);
+  }
+  if(archive_write_close(archive)!=ARCHIVE_OK){
+    return Nan::False();
+  }
+  archive_write_free(archive);
+
+  return Nan::True();
 }
 
-Local<Boolean> writeMemory(Local<String> file, Local<String> archivePath, Isolate* isolate){
+std::vector<std::string> split(char* string, char delim){
+  std::vector<std::string> tokens;
+  std::string input(string);
+  std::istringstream ss(input);
+  std::string token;
+
+  while(std::getline(ss, token, delim)) {
+    tokens.push_back(token);
+  }
+  return tokens;
+}
+
+int appendLocal(Local<Array> newFiles, Local<String> archivePath){
+  /**
+   * read all current entries and store into array
+   * close read
+   * open write
+   * write old files then new files
+  */
+  archive_t archive;
+  archive_entry_t entry;
+  int r;
+
+  std::vector<archive_entry_t> old_entries;
+
+  archive = archive_read_new();
+  archive_read_support_filter_all(archive);
+  archive_read_support_format_all(archive);
+
+  String::Utf8Value file(archivePath);
+
+  r = archive_read_open_filename(archive, *file, 10240);
+  if (r != ARCHIVE_OK){
+    Nan::ThrowError("Error Opening Archive");
+    return 0;
+  }
+  int i=0;
+  while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
+    old_entries.push_back(entry);
+    std::cout<<archive_entry_pathname(old_entries[i])<<std::endl;
+    archive_read_data_skip(archive);
+    i++;
+  }
+  r = archive_read_close(archive);
+  for(i=0;i<old_entries.size();i++){
+    std::cout<<archive_entry_pathname(old_entries[i])<<std::endl;
+  }
+  r = archive_read_free(archive);
+
+  if (r != ARCHIVE_OK){    
+    Nan::ThrowError("Error Closing Archive");
+    return 0;
+  }
+  return 1;
+}
+
+/*Local<Boolean> writeMemory(Local<String> file, Local<String> archivePath){
   //This might take some more doing
   return Nan::False();
-}
+}*/
 
 /**
  * ToDo
  * - Extract to/from disk
- * - Create New archive
+ * - Append to archive
  * - Remove file/folder from archive
 */
 
@@ -105,22 +206,45 @@ Local<Boolean> writeMemory(Local<String> file, Local<String> archivePath, Isolat
 #pragma region Wrappers
 
 void ListContent(const Nan::FunctionCallbackInfo<Value>& args) {
-  Isolate* isolate = args.GetIsolate();
-
   if(args.Length()!=1){
     Nan::ThrowError("This Takes One Argument");
     return;
   }
-  args.GetReturnValue().Set(view(args[0]->ToString(),isolate));
+  args.GetReturnValue().Set(view(args[0]->ToString()));
 }
 
 void GetInfo(const Nan::FunctionCallbackInfo<Value>& args){
-  Isolate* isolate = args.GetIsolate();
   if(args.Length()!=2){
     Nan::ThrowError("Requires two arguments");
     return;
   }
-  args.GetReturnValue().Set(info(args[0]->ToString(),args[1]->ToString(),isolate));
+  args.GetReturnValue().Set(info(args[0]->ToString(),args[1]->ToString()));
+}
+
+void WriteFromDisk(const Nan::FunctionCallbackInfo<Value>& args){
+  if(args.Length()==2){
+    if(!args[0]->IsArray()){
+      Nan::ThrowError("newFiles Must be Array");
+      return;
+    }
+    args.GetReturnValue().Set(writeLocal(Local<Array>::Cast(args[0]),args[1]->ToString()));
+  }
+  else{
+    Nan::ThrowError("Usage: WriteFromDisk([newFiles], archivePath)");
+  }
+}
+
+void Append(const Nan::FunctionCallbackInfo<Value>& args){
+  if(args.Length()==2){
+    if(!args[0]->IsArray()){
+      Nan::ThrowError("newFiles Must be Array");
+      return;
+    }
+    args.GetReturnValue().Set(appendLocal(Local<Array>::Cast(args[0]),args[1]->ToString()));
+  }
+  else{
+    Nan::ThrowError("Usage: Append([newFiles], archivePath)");
+  }
 }
 
 #pragma endregion
@@ -128,16 +252,17 @@ void GetInfo(const Nan::FunctionCallbackInfo<Value>& args){
 #pragma region Node
 
 NAN_MODULE_INIT(init) {
-  /*Isolate* isolate = exports->GetIsolate();
-
-  exports->Set(String::NewFromUtf8(isolate,"ListContent"),FunctionTemplate::New(isolate,ListContent)->GetFunction());
-  exports->Set(String::NewFromUtf8(isolate,"GetInfo"),FunctionTemplate::New(isolate,GetInfo)->GetFunction());*/
-
   Nan::Set(target, New<String>("ListContent").ToLocalChecked(),
     GetFunction(New<FunctionTemplate>(ListContent)).ToLocalChecked());
 
   Nan::Set(target, New<String>("GetInfo").ToLocalChecked(),
     GetFunction(New<FunctionTemplate>(GetInfo)).ToLocalChecked());
+
+  Nan::Set(target, New<String>("WriteFromDisk").ToLocalChecked(),
+    GetFunction(New<FunctionTemplate>(WriteFromDisk)).ToLocalChecked());
+
+  Nan::Set(target, New<String>("Append").ToLocalChecked(),
+    GetFunction(New<FunctionTemplate>(Append)).ToLocalChecked());
 
 }
 

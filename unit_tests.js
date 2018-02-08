@@ -69,3 +69,35 @@ exports.testInfo7zDirFile = function(test) {
     test.ok(!ArchiveManager.GetInfo('entry_1.txt','./test_cases/test-7z.7z').directory, "GetInfo directory for file for 7zip");
     test.done();
 };
+
+exports.testWriteZipSingle = function(test) {
+    test.expect(2);
+    test.ok(ArchiveManager.WriteFromDisk(['test_cases/entry_1.txt'],'./test_cases/test-write.zip'), "Write to zip");
+    test.deepEqual(ArchiveManager.ListContent('./test_cases/test-write.zip'),[
+        "entry_1.txt"
+        ], "ListContent After Write");
+    test.done();
+};
+
+exports.testWriteZipMulti = function(test) {
+    test.expect(2);
+    test.ok(ArchiveManager.WriteFromDisk(['test_cases/entry_1.txt','test_cases/entry_2.txt','test_cases/entry_3.txt'],'./test_cases/test-write.zip'), "Write to zip");
+    test.deepEqual(ArchiveManager.ListContent('./test_cases/test-write.zip'),[
+        "entry_1.txt",
+        "entry_2.txt",
+        "entry_3.txt"
+        ], "ListContent After Write");
+    test.done();
+};
+
+exports.testAppendZip = function(test) {
+    test.expect(2);
+    test.ok(ArchiveManager.Append(['test_cases/entry_4.txt'],'./test_cases/test-write.zip'), "Write to zip");
+    test.deepEqual(ArchiveManager.ListContent('./test_cases/test-write.zip'),[
+        "entry_1.txt",
+        "entry_2.txt",
+        "entry_3.txt",
+        "entry_4.txt"
+        ], "ListContent After Write");
+    test.done();
+};
