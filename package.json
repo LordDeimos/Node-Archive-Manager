@@ -4,5 +4,8 @@
   "author": "Alex Barnier <alexjbarnier@gmail.com>",
   "dependencies": {
     "nan": "^2.8.0"
+  },
+  "scripts": {
+    "test": "nodeunit unit_tests.js"
   }
 }

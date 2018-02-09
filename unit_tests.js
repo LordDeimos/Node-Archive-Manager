@@ -1,4 +1,4 @@
-const ArchiveManager = require('./build/Debug/archive_manager');
+const ArchiveManager = require('./build/Release/archive_manager');
 const fs = require('fs');
 
 exports.testReadZip = function(test) {
