@@ -5,6 +5,11 @@ node_js: "0.10"
 before_install: 
   - "sudo apt-get update"
   - "bash install_deps.sh"
+  - "npm install -g node-gyp"
   - "npm install -g nodeunit"
-  
+
+script:
+  - "node-gyp configure rebuild"
+  - "npm test"
+
 dist: "artful"
