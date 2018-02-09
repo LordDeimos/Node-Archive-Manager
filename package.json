@@ -6,6 +6,7 @@
     "nan": "^2.8.0"
   },
   "scripts": {
+    "install": "node-gyp configure rebuild",
     "test": "nodeunit unit_tests.js"
   }
 }
