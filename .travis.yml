@@ -7,9 +7,4 @@ before_install:
   - "bash install_deps.sh"
   - "npm install -g nodeunit"
 
-script:
-  - "npm install -g node-gyp"
-  - "node-gyp configure rebuild"
-  - "npm test"
-
 dist: "artful"
