@@ -313,7 +313,7 @@ NAN_MODULE_INIT(init) {
 
 }
 
-NODE_MODULE(NODE_GYP_MODULE_NAME, init);
+NODE_MODULE(archive_manager, init);
 
 #pragma endregion
 
