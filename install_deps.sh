@@ -6,8 +6,8 @@ sudo dpkg -i gcc-6-base_6.3.0-12ubuntu2_amd64.deb
 wget http://launchpadlibrarian.net/314907683/libgcc1_6.3.0-12ubuntu2_amd64.deb
 sudo dpkg -i libgcc1_6.3.0-12ubuntu2_amd64.deb
 
-wget http://launchpadlibrarian.net/324302154/libc6_2.24-9ubuntu2.2_amd64.deb
-sudo dpkg -i libc6_2.24-9ubuntu2.2_amd64.deb
+wget http://launchpadlibrarian.net/153554145/libc6_2.17-93ubuntu4_amd64.deb
+sudo dpkg -i libc6_2.17-93ubuntu4_amd64.deb
 
 wget http://launchpadlibrarian.net/314907710/libstdc++6_6.3.0-12ubuntu2_amd64.deb
 sudo dpkg -i libstdc++6_6.3.0-12ubuntu2_amd64.deb
