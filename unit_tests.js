@@ -110,7 +110,7 @@ exports.testExtract = function(test) {
     test.done();
 };
 
-/* Lets not do this just yet...*/
+
 exports.testAppendZip = function(test) {
     test.expect(2);
     test.ok(ArchiveManager.Append(['test_cases/entry_4.txt'],'./test_cases/test-write.zip'), "Write to zip");
@@ -120,5 +120,11 @@ exports.testAppendZip = function(test) {
         "entry_3.txt",
         "entry_4.txt"
         ].sort(), "ListContent After Write");
+    test.done();
+};
+
+exports.testReadMemory = function(test) {
+    test.expect(1);
+    test.ok(ArchiveManager.GetInfo('entry_1.txt','./test_cases/test-7z.7z'), "GetInfo directory for file for 7zip");
     test.done();
 };

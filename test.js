@@ -1,10 +1,4 @@
-const ArchiveManager = require('./build/Debug/archive_manager');
-const fs = require('fs');
+const ArchiveManager = require('./build/Release/archive_manager');
 
-fs.readdir("./test_cases/output/",function(err,files){
-    if(err){
-        console.error(err);
-    }
-    files.sort();
-    console.log(files);
-});
+//console.log(ArchiveManager.ReadBuffer('entry_1.txt','./test_cases/test-zip.zip').toString('base64'));
+ArchiveManager.ReadBuffer('page007.jpeg','/media/alex/Comics/Comics/Noragami volume 1.cbz');

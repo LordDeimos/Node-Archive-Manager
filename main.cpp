@@ -6,6 +6,8 @@
 #include <archive.h>
 #include <archive_entry.h>
 
+#define BLOCK_SIZE 10240
+
 namespace archive_manager {
 
 using namespace v8;
@@ -63,7 +65,7 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath){
   String::Utf8Value internalFile(fileName);
 
   Local<Object> object = New<Object>();
-  r = archive_read_open_filename(archive, *file, 10240);
+  r = archive_read_open_filename(archive, *file, BLOCK_SIZE);
   if (r != ARCHIVE_OK){
     Nan::ThrowError("Error Opening Archive");
     return New<Object>();
@@ -163,7 +165,7 @@ Local<Boolean> extract(Local<String> archivePath, Local<String> outputPath){
   archive_write_disk_set_options(archivew, flags);
   archive_write_disk_set_standard_lookup(archivew);
 
-  if((response=archive_read_open_filename(archive,*filename,10240))){
+  if((response=archive_read_open_filename(archive,*filename,BLOCK_SIZE))){
     Nan::ThrowError("Error Opening Archive");
     return Nan::False();
   }
@@ -227,6 +229,57 @@ Local<Boolean> appendLocal(Local<Array> newFiles, Local<String> archivePath){
   return Nan::False();
 }
 
+Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
+  String::Utf8Value filename(archivePath);
+  String::Utf8Value internalFile(internalPath);
+
+  archive_t archive;
+  archive_entry_t entry;
+  int response;
+  char* output = (char*)calloc(BLOCK_SIZE,sizeof(char*));
+  size_t totalsize=0;
+
+  archive = archive_read_new();
+  archive_read_support_format_all(archive);
+  archive_read_support_compression_all(archive);
+  if((response=archive_read_open_filename(archive,*filename,BLOCK_SIZE))){
+    Nan::ThrowError("Error Opening Archive");
+    return Nan::New<Object>();
+  }
+
+  while((response=archive_read_next_header(archive,&entry))!=ARCHIVE_EOF){
+    if(response<ARCHIVE_WARN){
+      Nan::ThrowError("Corrupt Archive");
+      return Nan::New<Object>();
+    }
+    else if(archive_entry_size(entry) > 0){
+      if(!strcmp(archive_entry_pathname(entry),*internalFile)){
+        std::cout<<"Got Entry"<<std::endl;
+        const void* buffer;
+        size_t size;
+        la_int64_t offset;
+        while((response = archive_read_data_block(archive,&buffer,&size,&offset))!=ARCHIVE_EOF){
+          if(response<ARCHIVE_OK){
+            Nan::ThrowError("Error Reading Data");
+            return Nan::New<Object>();
+          }
+          totalsize+=size;
+          if(size>0){
+            std::cout<<totalsize<<std::endl;
+            if(totalsize>=BLOCK_SIZE){
+              output = (char*)realloc(output,totalsize*sizeof(char*));
+            }
+            strcat(output,(char*)buffer);
+          }
+        }
+        break;
+      }
+    }
+  }
+  archive_read_free(archive);
+  return Nan::NewBuffer(output, totalsize).ToLocalChecked();
+}
+
 
 /*Local<Boolean> writeMemory(Local<String> file, Local<String> archivePath){
   //This might take some more doing
@@ -235,9 +288,9 @@ Local<Boolean> appendLocal(Local<Array> newFiles, Local<String> archivePath){
 
 /**
  * ToDo
- * - Extract to/from disk
- * - Append to archive
  * - Remove file/folder from archive
+ * - Append/Write from in memory
+ * - Read Data into memory
 */
 
 #pragma endregion
@@ -298,6 +351,15 @@ void Extract(const Nan::FunctionCallbackInfo<Value>& args){
   }
 }
 
+void ReadBuffer(const Nan::FunctionCallbackInfo<Value>& args){
+  if(args.Length()==2){    
+    args.GetReturnValue().Set(getData(args[0]->ToString(),args[1]->ToString()));
+  }
+  else{
+    Nan::ThrowError("Usage: ReadBuffer(internalPath, archivePath)");
+  }
+}
+
 #pragma endregion
 
 #pragma region Node
@@ -318,6 +380,8 @@ NAN_MODULE_INIT(init) {
   Nan::Set(target, New<String>("Extract").ToLocalChecked(),
     GetFunction(New<FunctionTemplate>(Extract)).ToLocalChecked());
 
+  Nan::Set(target, New<String>("ReadBuffer").ToLocalChecked(),
+    GetFunction(New<FunctionTemplate>(ReadBuffer)).ToLocalChecked());
 }
 
 NODE_MODULE(archive_manager, init);
