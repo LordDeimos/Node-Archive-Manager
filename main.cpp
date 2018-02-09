@@ -101,7 +101,7 @@ Local<Boolean> writeLocal(Local<Array> files, Local<String> archivePath){
   archive = archive_write_new();
   archive_write_set_format_filter_by_ext(archive,*file);
   if(archive_write_open_filename(archive, *file)!=ARCHIVE_OK){
-    Nan::ThrowError("Error Opening Archive")
+    Nan::ThrowError("Error Opening Archive");
     return Nan::False();
   }
   for(int i=0;i<files->Length();i++){    
@@ -127,7 +127,7 @@ Local<Boolean> writeLocal(Local<Array> files, Local<String> archivePath){
     archive_entry_free(entry);
   }
   if(archive_write_close(archive)!=ARCHIVE_OK){
-    Nan::ThrowError("Error Closing Archive")
+    Nan::ThrowError("Error Closing Archive");
     return Nan::False();
   }
   archive_write_free(archive);
@@ -164,20 +164,20 @@ Local<Boolean> extract(Local<String> archivePath, Local<String> outputPath){
   archive_write_disk_set_standard_lookup(archivew);
 
   if((response=archive_read_open_filename(archive,*filename,10240))){
-    Nan::ThrowError("Error Opening Archive")
+    Nan::ThrowError("Error Opening Archive");
     return Nan::False();
   }
 
   while((response=archive_read_next_header(archive,&entry))!=ARCHIVE_EOF){
     if(response<ARCHIVE_WARN){
-      Nan::ThrowError("Currupt Archive")
+      Nan::ThrowError("Corrupt Archive");
       return Nan::False();
     }
     std::string internal(archive_entry_pathname(entry));
     std::string path(*outPath);
     archive_entry_set_pathname(entry,(path+internal).c_str());
     if((response=archive_write_header(archivew,entry))!=ARCHIVE_OK){
-      Nan::ThrowError("Error Writing Header")
+      Nan::ThrowError("Error Writing Header");
       return Nan::False();
     }
     else if(archive_entry_size(entry) > 0){
@@ -186,11 +186,11 @@ Local<Boolean> extract(Local<String> archivePath, Local<String> outputPath){
       la_int64_t offset;
       while((response = archive_read_data_block(archive,&buffer,&size,&offset))!=ARCHIVE_EOF){
         if(response<ARCHIVE_OK){
-          Nan::ThrowError("Error Reading Data")
+          Nan::ThrowError("Error Reading Data");
           return Nan::False();
         }
         if((response = archive_write_data_block(archivew,buffer,size,offset))<ARCHIVE_OK){
-          Nan::ThrowError("Error Writing Data")
+          Nan::ThrowError("Error Writing Data");
           return Nan::False();
         }
       }
