@@ -1,4 +1,5 @@
-const ArchiveManager = require('./build/Release/archive_manager');
+const ArchiveManager = require('./build/Debug/archive_manager');
+const fs = require('fs');
 
 exports.testReadZip = function(test) {
     test.expect(1);
@@ -90,14 +91,34 @@ exports.testWriteZipMulti = function(test) {
     test.done();
 };
 
+exports.testExtract = function(test) {
+    test.expect(2);
+    test.ok(ArchiveManager.Extract('./test_cases/test-7z.7z','./test_cases/output/'), "Extract 7zip");
+    var files = fs.readdirSync("./test_cases/output/");
+    test.deepEqual(files,[
+        "entry_1.txt",
+        "entry_2.txt",
+        "entry_3.txt",
+        "entry_4.txt",
+        "entry_5.txt",
+        "entry_6.txt",
+        "entry_7.txt",
+        "entry_8.txt",
+        "entry_9.txt",
+        "entry_10.txt"
+    ].sort());
+    test.done();
+};
+
+/* Lets not do this just yet...*/
 exports.testAppendZip = function(test) {
     test.expect(2);
     test.ok(ArchiveManager.Append(['test_cases/entry_4.txt'],'./test_cases/test-write.zip'), "Write to zip");
-    test.deepEqual(ArchiveManager.ListContent('./test_cases/test-write.zip'),[
+    test.deepEqual(ArchiveManager.ListContent('./test_cases/test-write.zip').sort(),[
         "entry_1.txt",
         "entry_2.txt",
         "entry_3.txt",
         "entry_4.txt"
-        ], "ListContent After Write");
+        ].sort(), "ListContent After Write");
     test.done();
 };

@@ -4,6 +4,7 @@ node_js: "0.10"
 
 before_install: 
   - "sudo apt-get update"
+  - "bash install_deps.sh"
   - "sudo apt-get install libarchive-dev"
   - "npm install -g nodeunit"
 

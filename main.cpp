@@ -36,7 +36,7 @@ Local<Array> view(Local<String> path){
     return New<Array>();
   }
   int i=0;
-  while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
+  while (archive_read_next_header(archive, &entry) != ARCHIVE_EOF) {
     Nan::Set(array,i,New<String>(archive_entry_pathname(entry)).ToLocalChecked());
     archive_read_data_skip(archive);
     i++;
@@ -145,49 +145,81 @@ std::vector<std::string> split(char* string, char delim){
   return tokens;
 }
 
-int appendLocal(Local<Array> newFiles, Local<String> archivePath){
-  /**
-   * read all current entries and store into array
-   * close read
-   * open write
-   * write old files then new files
-  */
-  archive_t archive;
-  archive_entry_t entry;
-  int r;
+Local<Boolean> extract(Local<String> archivePath, Local<String> outputPath){
 
-  std::vector<archive_entry_t> old_entries;
+  String::Utf8Value filename(archivePath);
+  String::Utf8Value outPath(outputPath);
+
+  archive_t archive, archivew;
+  archive_entry_t entry;
+  int response, flags = ARCHIVE_EXTRACT_TIME|ARCHIVE_EXTRACT_PERM|ARCHIVE_EXTRACT_ACL|ARCHIVE_EXTRACT_FFLAGS;
 
   archive = archive_read_new();
-  archive_read_support_filter_all(archive);
   archive_read_support_format_all(archive);
+  archive_read_support_compression_all(archive);
+  archivew = archive_write_disk_new();
+  archive_write_disk_set_options(archivew, flags);
+  archive_write_disk_set_standard_lookup(archivew);
 
-  String::Utf8Value file(archivePath);
+  if((response=archive_read_open_filename(archive,*filename,10240))){
+    return Nan::False();
+  }
 
-  r = archive_read_open_filename(archive, *file, 10240);
-  if (r != ARCHIVE_OK){
-    Nan::ThrowError("Error Opening Archive");
-    return 0;
+  while((response=archive_read_next_header(archive,&entry))!=ARCHIVE_EOF){
+    if(response<ARCHIVE_WARN){
+      return Nan::False();
+    }
+    std::string internal(archive_entry_pathname(entry));
+    std::string path(*outPath);
+    archive_entry_set_pathname(entry,(path+internal).c_str());
+    if((response=archive_write_header(archivew,entry))!=ARCHIVE_OK){
+      return Nan::False();
+    }
+    else if(archive_entry_size(entry) > 0){
+      const void* buffer;
+      size_t size;
+      la_int64_t offset;
+      while((response = archive_read_data_block(archive,&buffer,&size,&offset))!=ARCHIVE_EOF){
+        if(response<ARCHIVE_OK){
+          return Nan::False();
+        }
+        if((response = archive_write_data_block(archivew,buffer,size,offset))<ARCHIVE_OK){
+          return Nan::False();
+        }
+      }
+    }
   }
-  int i=0;
-  while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
-    old_entries.push_back(entry);
-    std::cout<<archive_entry_pathname(old_entries[i])<<std::endl;
-    archive_read_data_skip(archive);
-    i++;
-  }
-  r = archive_read_close(archive);
-  for(i=0;i<old_entries.size();i++){
-    std::cout<<archive_entry_pathname(old_entries[i])<<std::endl;
-  }
-  r = archive_read_free(archive);
+  archive_read_free(archive);
+  archive_write_free(archivew);
 
-  if (r != ARCHIVE_OK){    
-    Nan::ThrowError("Error Closing Archive");
-    return 0;
-  }
-  return 1;
+  return Nan::True();
 }
+
+Local<Boolean> appendLocal(Local<Array> newFiles, Local<String> archivePath){
+  /**
+   * Because there is no way to do in-place edits:
+   * extract to temp dir
+   * create list of old files and new files
+   * write all files over the old archive
+  */
+
+  std::string tempDir("./tmp/");
+
+  Local<Array> oldFiles = view(archivePath);
+
+  for(int i=0;i<oldFiles->Length();i++){
+    String::Utf8Value temp(oldFiles->Get(i)->ToString());
+    std::string path(*temp);
+    Nan::Set(newFiles,newFiles->Length(),Nan::New<String>(tempDir+path).ToLocalChecked());
+  }
+
+  if(extract(archivePath,Nan::New<String>(tempDir).ToLocalChecked())->BooleanValue()){
+    return writeLocal(newFiles, archivePath);
+  }
+
+  return Nan::False();
+}
+
 
 /*Local<Boolean> writeMemory(Local<String> file, Local<String> archivePath){
   //This might take some more doing
@@ -247,6 +279,18 @@ void Append(const Nan::FunctionCallbackInfo<Value>& args){
   }
 }
 
+void Extract(const Nan::FunctionCallbackInfo<Value>& args){
+  if(args.Length()==1){
+    args.GetReturnValue().Set(extract(args[0]->ToString(),Nan::New<String>("./").ToLocalChecked()));
+  }
+  else if(args.Length()==2){    
+    args.GetReturnValue().Set(extract(args[0]->ToString(),args[1]->ToString()));
+  }
+  else{
+    Nan::ThrowError("Usage: Extract(archivePath, outputPath)");
+  }
+}
+
 #pragma endregion
 
 #pragma region Node
@@ -263,6 +307,9 @@ NAN_MODULE_INIT(init) {
 
   Nan::Set(target, New<String>("Append").ToLocalChecked(),
     GetFunction(New<FunctionTemplate>(Append)).ToLocalChecked());
+
+  Nan::Set(target, New<String>("Extract").ToLocalChecked(),
+    GetFunction(New<FunctionTemplate>(Extract)).ToLocalChecked());
 
 }
 
