@@ -125,6 +125,12 @@ exports.testAppendZip = function(test) {
 
 exports.testReadMemory = function(test) {
     test.expect(1);
-    test.deepEqual(fs.readFileSync('./test/entry_1.txt').toString(),ArchiveManager.ReadBuffer('entry_1.txt','./test/test-zip.zip').toString(), "GetInfo directory for file for 7zip");
+    test.deepEqual(fs.readFileSync('./test/entry_1.txt').toString(),ArchiveManager.ReadBuffer('entry_1.txt','./test/test-zip.zip').toString(), "ReadBuffer for file not in Zip");
+    test.done();
+};
+
+exports.testReadMemoryNotThere = function(test) {
+    test.expect(1);
+    test.equal(undefined,ArchiveManager.ReadBuffer('entry_11.txt','./test/test-zip.zip').toString(), "ReadBuffer for file not in Zip");
     test.done();
 };

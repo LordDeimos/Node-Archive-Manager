@@ -5,9 +5,17 @@ language:
 node_js: '0.10'
 before_install:
 - sudo apt-get update
-- bash install_deps.sh
 - npm install -g nodeunit
 dist: artful
+
+addons:
+  apt:
+    sources:
+      - sourceline: "deb http://us.archive.ubuntu.com/ubuntu/ artful main universe restricted multiverse"
+    packages:
+      - libarchive-dev
+
+
 notifications:
   email: false
   

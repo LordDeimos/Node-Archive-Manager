@@ -360,8 +360,14 @@ void Extract(const Nan::FunctionCallbackInfo<Value>& args){
 }
 
 void ReadBuffer(const Nan::FunctionCallbackInfo<Value>& args){
-  if(args.Length()==2){    
-    args.GetReturnValue().Set(getData(args[0]->ToString(),args[1]->ToString()));
+  if(args.Length()==2){
+    Local<Object> output = getData(args[0]->ToString(),args[1]->ToString());
+    if(output->Get('length')){
+      args.GetReturnValue().Set(output);
+    }
+    else{
+      args.GetReturnValue().Set(Nan::Undefined());
+    }
   }
   else{
     Nan::ThrowError("Usage: ReadBuffer(internalPath, archivePath)");
