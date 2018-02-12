@@ -5,15 +5,18 @@ language:
 node_js: '0.10'
 before_install:
 - sudo apt-get update
+- sudo apt-get install libarchive-dev
 - npm install -g nodeunit
+
 dist: artful
+group: latest
 
 addons:
   apt:
     sources:
-      - sourceline: "deb http://us.archive.ubuntu.com/ubuntu/ artful main universe restricted multiverse"
+    - sourceline: "deb http://us.archive.ubuntu.com/ubuntu/ artful main universe restricted multiverse"
     packages:
-      - libarchive-dev
+    - libarchive-dev
 
 
 notifications:
