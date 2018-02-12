@@ -1,8 +1,8 @@
 {
     "targets": [
         {
-            "target_name": "archive_manager",
-            "sources": ["main.cpp"],
+            "target_name": "manager",
+            "sources": ["./src/main.cpp"],
             'conditions': [
                 ['OS=="win"', {
                 'include_dirs': [

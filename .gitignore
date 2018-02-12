@@ -32,4 +32,4 @@ build/
 .vscode/
 *.log
 node_modules/
-test_cases/output
+test/output

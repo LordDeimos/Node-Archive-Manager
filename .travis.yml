@@ -11,3 +11,6 @@ before_install:
   - "npm install -g nodeunit"
 
 dist: "artful"
+
+notifications:
+  email: false

@@ -389,7 +389,7 @@ NAN_MODULE_INIT(init) {
     GetFunction(New<FunctionTemplate>(ReadBuffer)).ToLocalChecked());
 }
 
-NODE_MODULE(archive_manager, init);
+NODE_MODULE(manager, init);
 
 #pragma endregion
 

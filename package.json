@@ -1,11 +1,12 @@
 {
-  "name": "Node-Archive-Manager",
+  "name": "archive-manager",
   "version": "0.1.0",
   "author": "Alex Barnier <alexjbarnier@gmail.com>",
+  "main": "index.js",
   "dependencies": {
     "nan": "^2.8.0"
   },
   "scripts": {
-    "test": "nodeunit unit_tests.js"
+    "test": "nodeunit ./test/unit_tests.js"
   }
 }
