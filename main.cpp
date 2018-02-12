@@ -231,8 +231,8 @@ Local<Boolean> appendLocal(Local<Array> newFiles, Local<String> archivePath){
 
 std::vector<char> cat(std::vector<char> left, char* right, int rightSize){
   std::vector<char> output;
-  for(char entry : left){
-    output.push_back(entry);
+  for(int i=0;i<output.size();i++){
+    output.push_back(left[i]);
   }
   for(int i=0;i<rightSize;i++){    
     output.push_back(right[i]);
