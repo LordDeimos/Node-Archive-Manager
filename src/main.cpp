@@ -283,7 +283,10 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
     }
   }
   archive_read_free(archive);
-  return Nan::CopyBuffer(output.data(), static_cast<uint32_t>(output.size())).ToLocalChecked();
+  if(output.size()>0){
+    return Nan::CopyBuffer(output.data(), static_cast<uint32_t>(output.size())).ToLocalChecked();
+  }
+  return Nan::New<Object>();
 }
 
 
