@@ -46,3 +46,5 @@ sudo dpkg -i libarchive13_3.2.2-2_amd64.deb
 
 wget http://launchpadlibrarian.net/314712540/libarchive-dev_3.2.2-2_amd64.deb
 sudo dpkg -i libarchive-dev_3.2.2-2_amd64.deb
+
+rm -f *.deb

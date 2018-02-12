@@ -3,6 +3,9 @@
   "version": "0.1.1",
   "author": "Alex Barnier <alexjbarnier@gmail.com>",
   "main": "index.js",
+  "engines": {
+      "node": ">=0.10"
+  },
   "dependencies": {
     "nan": "^2.8.0"
   },
