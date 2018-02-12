@@ -1,16 +1,21 @@
 sudo: required
-language: 
-  - node_js
-  - c++
-
-node_js: "0.10"
-
-before_install: 
-  - "sudo apt-get update"
-  - "bash install_deps.sh"
-  - "npm install -g nodeunit"
-
-dist: "artful"
-
+language:
+- node_js
+- c++
+node_js: '0.10'
+before_install:
+- sudo apt-get update
+- bash install_deps.sh
+- npm install -g nodeunit
+dist: artful
 notifications:
   email: false
+  
+deploy:
+  provider: npm
+  email: alexjbarnier@gmail.com
+  api_key:
+    secure: qWBSRgEB6yVusH1qfKoip10cs/dFhI4D9Qm0O0BhItA6Ys/81qStaCP4u3L5k3waRYsD+byWp1lUV2lssnaR0sLy9X55BzJD8xnf0+UmTQZM8Q0J/tmnBbupxvkmg/SRzLjy9rV6GGzMU9x2XotLIXNQAQpWfn3bVqyzL8R2rvjxiOqU1iggra+n55IMKULpOmoINsiMKVEK603YLXJuYps/yRowXChDKa3tk+Orb/Tvz60iHavxajjXZ5lZONvlHmN4vx5p/gAXeJzbm65yhkY268FKNx9SEgO2xuheeQinnYKvOkiGUeGFk2jDpMLTw8KGcUZRK32rt7Zbd5Mjx6VnGWBaiLJhzBSrxGLmCskYdWk9/D2+je3SYdnusWWKpZlYv0MfsU3t2yO3yk48tTPDEaqze1H2ItaG56acyvV5GrW32CusCMe8JIWozCEXMg4D+uqVgkJUwdu3ZAgYtpWESRCodTrPnrsoMJF9smEDSlNycWLTSPO/XxGFntSfipz32RERo+jxygWNCXAsRG8+LH+H8hoJH+TRM+2aOnb5JWKoro7H/Eu5r5evGRN9YBbdLRs5FXpuRxwcpBy4H2bmcgc0XBqF5QShsU8QKbDAWgiikHPjeiAcXDnlj4gt1Jv84LVQpW1rr8nv96Bs8D+BQEJqKH1+ix/zOP8wzmw=
+  on:
+    tags: true
+    repo: LordDeimos/Node-Archive-Manager
