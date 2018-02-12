@@ -229,6 +229,17 @@ Local<Boolean> appendLocal(Local<Array> newFiles, Local<String> archivePath){
   return Nan::False();
 }
 
+std::vector<char> cat(std::vector<char> left, char* right, int rightSize){
+  std::vector<char> output;
+  for(char entry : left){
+    output.push_back(entry);
+  }
+  for(int i=0;i<rightSize;i++){    
+    output.push_back(right[i]);
+  }
+  return output;
+}
+
 Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
   String::Utf8Value filename(archivePath);
   String::Utf8Value internalFile(internalPath);
@@ -236,7 +247,7 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
   archive_t archive;
   archive_entry_t entry;
   int response;
-  char* output = (char*)calloc(BLOCK_SIZE,sizeof(char*));
+  std::vector<char> output;
   size_t totalsize=0;
 
   archive = archive_read_new();
@@ -254,7 +265,6 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
     }
     else if(archive_entry_size(entry) > 0){
       if(!strcmp(archive_entry_pathname(entry),*internalFile)){
-        std::cout<<"Got Entry"<<std::endl;
         const void* buffer;
         size_t size;
         la_int64_t offset;
@@ -265,19 +275,15 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
           }
           totalsize+=size;
           if(size>0){
-            std::cout<<totalsize<<std::endl;
-            if(totalsize>=BLOCK_SIZE){
-              output = (char*)realloc(output,totalsize*sizeof(char*));
-            }
-            strcat(output,(char*)buffer);
+            output = cat(output, (char*)buffer, size);
           }
+          break;
         }
-        break;
       }
     }
   }
   archive_read_free(archive);
-  return Nan::NewBuffer(output, totalsize).ToLocalChecked();
+  return Nan::CopyBuffer(output.data(), static_cast<uint32_t>(output.size())).ToLocalChecked();
 }
 
 
@@ -290,7 +296,6 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
  * ToDo
  * - Remove file/folder from archive
  * - Append/Write from in memory
- * - Read Data into memory
 */
 
 #pragma endregion
