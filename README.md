@@ -1,7 +1,7 @@
 # Node-Archive-Manager
 [![Build Status](https://travis-ci.org/LordDeimos/Node-Archive-Manager.svg?branch=master)](https://travis-ci.org/LordDeimos/Node-Archive-Manager)
 [![NPM Version](https://img.shields.io/npm/v/archive-manager.svg)](https://www.npmjs.com/package/archive-manager)
-![Node Version](https://img.shields.io/node/v/archive-manager.svg)
+[![License](https://img.shields.io/github/license/LordDeimos/Node-Archive-Manager.svg)](https://github.com/LordDeimos/Node-Archive-Manager/blob/master/LICENSE)
 
 A Node.js plugin to manipulate archive files using C++
 
