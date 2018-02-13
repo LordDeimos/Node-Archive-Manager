@@ -243,7 +243,7 @@ Local<Boolean> extract(Local<String> archivePath, Local<String> outputPath){
     else if(archive_entry_size(entry) > 0){
       const void* buffer;
       size_t size;
-      la_int64_t offset;
+      int64_t offset;
       while((response = archive_read_data_block(archive,&buffer,&size,&offset))!=ARCHIVE_EOF){
         if(response<ARCHIVE_OK){
           Nan::ThrowError("Error Reading Data");
