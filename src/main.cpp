@@ -289,7 +289,7 @@ Local<Boolean> appendLocal(Local<Array> newFiles, Local<String> archivePath){
 
 std::vector<char> cat(std::vector<char> left, char* right, int rightSize){
   std::vector<char> output;
-  for(int i=0;i<output.size();i++){
+  for(int i=0;i<left.size();i++){
     output.push_back(left[i]);
   }
   for(int i=0;i<rightSize;i++){    
@@ -325,7 +325,7 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
       if(!strcmp(archive_entry_pathname(entry),*internalFile)){
         const void* buffer;
         size_t size;
-        int64_t offset;
+        la_int64_t offset;
         while((response = archive_read_data_block(archive,&buffer,&size,&offset))!=ARCHIVE_EOF){
           if(response<ARCHIVE_OK){
             Nan::ThrowError("Error Reading Data");
@@ -334,13 +334,18 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
           totalsize+=size;
           if(size>0){
             output = cat(output, (char*)buffer, size);
+            std::cout<<size<<std::endl;
+            std::cout<<totalsize<<std::endl;
+            std::cout<<output.size()<<std::endl;
           }
-          break;
         }
+        break;
       }
     }
   }
   archive_read_free(archive);
+  std::cout<<totalsize<<std::endl;
+  std::cout<<output.size()<<std::endl;
   if(output.size()>0){
     return Nan::CopyBuffer(output.data(), static_cast<uint32_t>(output.size())).ToLocalChecked();
   }
