@@ -1,5 +1,7 @@
 # Node-Archive-Manager
 [![Build Status](https://travis-ci.org/LordDeimos/Node-Archive-Manager.svg?branch=master)](https://travis-ci.org/LordDeimos/Node-Archive-Manager)
+[![NPM Version](https://img.shields.io/npm/v/archive-manager.svg)](https://www.npmjs.com/package/archive-manager)
+![Node Version](https://img.shields.io/node/v/archive-manager.svg)
 
 A Node.js plugin to manipulate archive files using C++
 
@@ -14,10 +16,13 @@ npm install archive-manager
 ## Usage
 Here are some basic use cases:
 
-ListContent:
+Require:
 ```js
 const ArchiveManager = require('archive-manager');
+```
 
+ListContent:
+```js
 var content = ArchiveManager.ListContent('path/to/archive');
 
 ```
@@ -35,6 +40,8 @@ if(ArchiveManager.WriteFromDisk(['path/to/file/1','path/to/file/2','path/to/file
 ```
 
 Append:
+
+In-Place edits are currently not supported byt libarchive, so this will be very slow for large archives
 ```js
 if(ArchiveManager.Append('path/to/file','path/to/archive') === false){
     console.error("Failed")
