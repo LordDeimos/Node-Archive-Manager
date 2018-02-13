@@ -325,7 +325,7 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
       if(!strcmp(archive_entry_pathname(entry),*internalFile)){
         const void* buffer;
         size_t size;
-        la_int64_t offset;
+        int64_t offset;
         while((response = archive_read_data_block(archive,&buffer,&size,&offset))!=ARCHIVE_EOF){
           if(response<ARCHIVE_OK){
             Nan::ThrowError("Error Reading Data");
