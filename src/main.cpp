@@ -89,6 +89,61 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath){
   return object;
 }
 
+void set_filter(archive_t archive, char* file){
+  std::vector<std::string> tokens = split(file,'.');
+  if(tokens.size()>=2){
+    if(!tokens.back().compare("7zip")||!tokens.back().compare("cb7")){
+      archive_write_set_format_7zip(archive);
+      archive_write_add_filter_none(archive);
+    }
+    else if(!tokens.back().compare("zip")||!tokens.back().compare("cbz")){
+      archive_write_set_format_zip(archive);
+      archive_write_add_filter_none(archive);
+    }else if(!tokens.back().compare("jar")){
+      archive_write_set_format_zip(archive);
+      archive_write_add_filter_none(archive);
+    }else if(!tokens.back().compare("cpio")){
+      archive_write_set_format_cpio(archive);
+      archive_write_add_filter_none(archive);
+    }else if(!tokens.back().compare("iso")){
+      archive_write_set_format_iso9660(archive);
+      archive_write_add_filter_none(archive);      
+    }else if(!tokens.back().compare("tar")){
+      archive_write_set_format_pax_restricted(archive);
+      archive_write_add_filter_none(archive);      
+    }else if(!tokens.back().compare("tgz")){
+      archive_write_set_format_pax_restricted(archive);
+      archive_write_add_filter_gzip(archive);
+    }else if(!tokens.back().compare("gz")){
+      if(tokens[tokens.size()-2]=="tar"){                  
+        archive_write_set_format_pax_restricted(archive);
+        archive_write_add_filter_gzip(archive);
+      }
+    }else if(!tokens.back().compare("bz2")){
+      if(tokens[tokens.size()-2]=="tar"){                  
+        archive_write_set_format_pax_restricted(archive);
+        archive_write_add_filter_bzip2(archive);
+      }
+    }else if(!tokens.back().compare("xz")){
+      if(tokens[tokens.size()-2]=="tar"){                  
+        archive_write_set_format_pax_restricted(archive);
+        archive_write_add_filter_xz(archive);
+      }
+    }else if(!tokens.back().compare("a")||!tokens.back().compare("ar")){
+      #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__)
+        archive_write_set_format_ar_bsd(archive);
+        archive_write_add_filter_none(archive);
+      #else
+        archive_write_set_format_ar_svr4(archive);
+        archive_write_add_filter_none(archive);
+      #endif
+    }else{      
+      archive_write_set_format_zip(archive);
+      archive_write_add_filter_none(archive);
+    }
+  }
+}
+
 Local<Boolean> writeLocal(Local<Array> files, Local<String> archivePath){
   //This might take some doing
   archive_t archive;
@@ -101,7 +156,10 @@ Local<Boolean> writeLocal(Local<Array> files, Local<String> archivePath){
   String::Utf8Value file(archivePath);
   
   archive = archive_write_new();
-  archive_write_set_format_filter_by_ext(archive,*file);
+
+  //archive_write_set_format_filter_by_ext(archive,*file); only for libarchive >=3.2
+  set_filter(archive,*file);
+
   if(archive_write_open_filename(archive, *file)!=ARCHIVE_OK){
     Nan::ThrowError("Error Opening Archive");
     return Nan::False();
@@ -361,13 +419,7 @@ void Extract(const Nan::FunctionCallbackInfo<Value>& args){
 
 void ReadBuffer(const Nan::FunctionCallbackInfo<Value>& args){
   if(args.Length()==2){
-    Local<Object> output = getData(args[0]->ToString(),args[1]->ToString());
-    if(output->Get('length')){
-      args.GetReturnValue().Set(output);
-    }
-    else{
-      args.GetReturnValue().Set(Nan::Undefined());
-    }
+    args.GetReturnValue().Set(getData(args[0]->ToString(),args[1]->ToString()));
   }
   else{
     Nan::ThrowError("Usage: ReadBuffer(internalPath, archivePath)");

@@ -131,6 +131,6 @@ exports.testReadMemory = function(test) {
 
 exports.testReadMemoryNotThere = function(test) {
     test.expect(1);
-    test.equal(undefined,ArchiveManager.ReadBuffer('entry_11.txt','./test/test-zip.zip').toString(), "ReadBuffer for file not in Zip");
+    test.equal(undefined,ArchiveManager.ReadBuffer('entry_11.txt','./test/test-zip.zip').length, "ReadBuffer for file not in Zip");
     test.done();
 };
