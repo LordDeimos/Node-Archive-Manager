@@ -34,7 +34,7 @@ Local<Array> view(Local<String> path){
 
   r = archive_read_open_filename(archive, *file, 10240);
   if (r != ARCHIVE_OK){
-    Nan::ThrowError("Error Opening Archive");
+    Nan::ThrowError(archive_error_string(archive));
     return New<Array>();
   }
   int i=0;
@@ -47,7 +47,7 @@ Local<Array> view(Local<String> path){
   r = archive_read_free(archive);
 
   if (r != ARCHIVE_OK){    
-    Nan::ThrowError("Error Closing Archive");
+    Nan::ThrowError(archive_error_string(archive));
     return New<Array>();
   }
   return array;
@@ -67,7 +67,7 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath){
   Local<Object> object = New<Object>();
   r = archive_read_open_filename(archive, *file, BLOCK_SIZE);
   if (r != ARCHIVE_OK){
-    Nan::ThrowError("Error Opening Archive");
+    Nan::ThrowError(archive_error_string(archive));
     return New<Object>();
   }
   while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
@@ -83,7 +83,7 @@ Local<Object> info(Local<String> fileName, Local<String> archivePath){
   r = archive_read_free(archive);
 
   if (r != ARCHIVE_OK){    
-    Nan::ThrowError("Error Closing Archive");
+    Nan::ThrowError(archive_error_string(archive));
     return New<Object>();
   }
   return object;
@@ -149,9 +149,9 @@ Local<Boolean> writeLocal(Local<Array> files, Local<String> archivePath){
   archive_t archive;
   archive_entry_t entry;
   struct stat st;
-  char buff[8192];
+  char buff[BLOCK_SIZE];
   int len;
-  int fd;
+  FILE* fd = NULL;
   
   String::Utf8Value file(archivePath);
   
@@ -161,7 +161,7 @@ Local<Boolean> writeLocal(Local<Array> files, Local<String> archivePath){
   set_filter(archive,*file);
 
   if(archive_write_open_filename(archive, *file)!=ARCHIVE_OK){
-    Nan::ThrowError("Error Opening Archive");
+    Nan::ThrowError(archive_error_string(archive));
     return Nan::False();
   }
   for(int i=0;i<files->Length();i++){    
@@ -177,17 +177,19 @@ Local<Boolean> writeLocal(Local<Array> files, Local<String> archivePath){
     archive_entry_set_filetype(entry, AE_IFREG);
     archive_entry_set_perm(entry, 0644);
     archive_write_header(archive, entry);
-    fd = open(*filename, O_RDONLY);
-    len = read(fd, buff, sizeof(buff));
-    while ( len > 0 ) {
-      archive_write_data(archive, buff, len);
-      len = read(fd, buff, sizeof(buff));
+    fd = fopen(*filename, "w");
+    if(fd){
+      len = fread(buff, sizeof(buff), sizeof(char),fd);
+      while ( len > 0 ) {
+        archive_write_data(archive, buff, len);
+        len = fread(buff, sizeof(buff), sizeof(char),fd);
+      }
+      fclose(fd);
     }
-    close(fd);
     archive_entry_free(entry);
   }
   if(archive_write_close(archive)!=ARCHIVE_OK){
-    Nan::ThrowError("Error Closing Archive");
+    Nan::ThrowError(archive_error_string(archive));
     return Nan::False();
   }
   archive_write_free(archive);
@@ -224,20 +226,20 @@ Local<Boolean> extract(Local<String> archivePath, Local<String> outputPath){
   archive_write_disk_set_standard_lookup(archivew);
 
   if((response=archive_read_open_filename(archive,*filename,BLOCK_SIZE))){
-    Nan::ThrowError("Error Opening Archive");
+    Nan::ThrowError(archive_error_string(archive));
     return Nan::False();
   }
 
   while((response=archive_read_next_header(archive,&entry))!=ARCHIVE_EOF){
     if(response<ARCHIVE_WARN){
-      Nan::ThrowError("Corrupt Archive");
+      Nan::ThrowError(archive_error_string(archive));
       return Nan::False();
     }
     std::string internal(archive_entry_pathname(entry));
     std::string path(*outPath);
     archive_entry_set_pathname(entry,(path+internal).c_str());
     if((response=archive_write_header(archivew,entry))!=ARCHIVE_OK){
-      Nan::ThrowError("Error Writing Header");
+      Nan::ThrowError(archive_error_string(archive));
       return Nan::False();
     }
     else if(archive_entry_size(entry) > 0){
@@ -246,11 +248,11 @@ Local<Boolean> extract(Local<String> archivePath, Local<String> outputPath){
       int64_t offset;
       while((response = archive_read_data_block(archive,&buffer,&size,&offset))!=ARCHIVE_EOF){
         if(response<ARCHIVE_OK){
-          Nan::ThrowError("Error Reading Data");
+          Nan::ThrowError(archive_error_string(archive));
           return Nan::False();
         }
         if((response = archive_write_data_block(archivew,buffer,size,offset))<ARCHIVE_OK){
-          Nan::ThrowError("Error Writing Data");
+          Nan::ThrowError(archive_error_string(archive));
           return Nan::False();
         }
       }
@@ -312,13 +314,13 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
   archive_read_support_format_all(archive);
   archive_read_support_compression_all(archive);
   if((response=archive_read_open_filename(archive,*filename,BLOCK_SIZE))){
-    Nan::ThrowError("Error Opening Archive");
+    Nan::ThrowError(archive_error_string(archive));
     return Nan::New<Object>();
   }
 
   while((response=archive_read_next_header(archive,&entry))!=ARCHIVE_EOF){
     if(response<ARCHIVE_WARN){
-      Nan::ThrowError("Corrupt Archive");
+      Nan::ThrowError(archive_error_string(archive));
       return Nan::New<Object>();
     }
     else if(archive_entry_size(entry) > 0){
@@ -328,15 +330,12 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
         int64_t offset;
         while((response = archive_read_data_block(archive,&buffer,&size,&offset))!=ARCHIVE_EOF){
           if(response<ARCHIVE_OK){
-            Nan::ThrowError("Error Reading Data");
+            Nan::ThrowError(archive_error_string(archive));
             return Nan::New<Object>();
           }
           totalsize+=size;
           if(size>0){
             output = cat(output, (char*)buffer, size);
-            std::cout<<size<<std::endl;
-            std::cout<<totalsize<<std::endl;
-            std::cout<<output.size()<<std::endl;
           }
         }
         break;
@@ -344,8 +343,6 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
     }
   }
   archive_read_free(archive);
-  std::cout<<totalsize<<std::endl;
-  std::cout<<output.size()<<std::endl;
   if(output.size()>0){
     return Nan::CopyBuffer(output.data(), static_cast<uint32_t>(output.size())).ToLocalChecked();
   }

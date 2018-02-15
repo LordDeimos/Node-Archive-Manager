@@ -6,7 +6,7 @@
 A Node.js plugin to manipulate archive files using C++
 
 ## Installation
-This currently is only for linux, as Windows has issues with libarchive which I am trying to resolve.
+This now supports windows, however only for 32-bit. I'm going to keep going whith it and hopefully get a 64-bit version soon.
 
 As per usual, use your node package manager of choice to install this in your project:
 ```sh
