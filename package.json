@@ -1,6 +1,6 @@
 {
   "name": "archive-manager",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "author": "Alex Barnier <alexjbarnier@gmail.com>",
   "main": "index.js",
