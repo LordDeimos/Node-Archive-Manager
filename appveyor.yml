@@ -1,0 +1,13 @@
+platform: x32
+
+install:
+  - ps: Install-Product node 0.10 x32
+  - npm install
+  - npm install -g nodeunit
+
+build_script:
+  - npm rebuild
+
+test_script:
+  - ps: "npm test # PowerShell"
+  - cmd: npm test
