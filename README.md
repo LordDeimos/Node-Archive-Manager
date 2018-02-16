@@ -1,13 +1,12 @@
 # Node-Archive-Manager
 [![Build Status](https://travis-ci.org/LordDeimos/Node-Archive-Manager.svg?branch=master)](https://travis-ci.org/LordDeimos/Node-Archive-Manager)
+[![Build status](https://ci.appveyor.com/api/projects/status/9p5qxv6vqd539iyo?svg=true)](https://ci.appveyor.com/project/LordDeimos/node-archive-manager)
 [![NPM Version](https://img.shields.io/npm/v/archive-manager.svg)](https://www.npmjs.com/package/archive-manager)
 [![License](https://img.shields.io/github/license/LordDeimos/Node-Archive-Manager.svg)](https://github.com/LordDeimos/Node-Archive-Manager/blob/master/LICENSE)
 
 A Node.js plugin to manipulate archive files using C++
 
 ## Installation
-This now supports windows, however only for 32-bit. I'm going to keep going whith it and hopefully get a 64-bit version soon.
-
 As per usual, use your node package manager of choice to install this in your project:
 ```sh
 npm install archive-manager
