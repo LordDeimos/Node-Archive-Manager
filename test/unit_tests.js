@@ -2,6 +2,7 @@ const ArchiveManager = require('../build/Release/manager');
 const fs = require('fs');
 const os = require('os');
 
+//Zip
 exports.testReadZip = function (test) {
     test.expect(1);
     test.deepEqual(ArchiveManager.ListContent('./test/test-zip.zip'), [
@@ -101,6 +102,7 @@ exports.testReadMemoryNotThere = function (test) {
     test.done();
 };
 
+//7z
 exports.testRead7z = function (test) {
     test.expect(1);
     test.deepEqual(ArchiveManager.ListContent('./test/test-7z.7z'), [
@@ -130,5 +132,137 @@ exports.testInfo7zName = function (test) {
 exports.testInfo7zDirFile = function (test) {
     test.expect(1);
     test.ok(!ArchiveManager.GetInfo('entry_1.txt', './test/test-7z.7z').directory, "GetInfo directory for file for 7zip");
+    test.done();
+};
+
+//tar
+exports.testReadTar = function (test) {
+    test.expect(1);
+    test.deepEqual(ArchiveManager.ListContent('./test/test-tar.tar'), [
+        "entry_1.txt",
+        "entry_2.txt",
+        "entry_3.txt",
+        "entry_4.txt",
+        "entry_5.txt",
+        "entry_6.txt",
+        "entry_7.txt",
+        "entry_8.txt",
+        "entry_9.txt",
+        "entry_10.txt"
+    ].sort(), "ListContent for tar");
+    test.done();
+};
+exports.testInfotarSize = function (test) {
+    test.expect(1);
+    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-tar.tar').size, 5315, "GetInfo size for tar");
+    test.done();
+};
+exports.testInfotarName = function (test) {
+    test.expect(1);
+    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-tar.tar').name, "entry_1.txt", "GetInfo name for tar");
+    test.done();
+};
+exports.testInfotarDirFile = function (test) {
+    test.expect(1);
+    test.ok(!ArchiveManager.GetInfo('entry_1.txt', './test/test-tar.tar').directory, "GetInfo directory for file for tar");
+    test.done();
+};
+
+//Bzip
+exports.testReadbz2 = function (test) {
+    test.expect(1);
+    test.deepEqual(ArchiveManager.ListContent('./test/test-bz2.tar.bz2'), [
+        "entry_1.txt",
+        "entry_2.txt",
+        "entry_3.txt",
+        "entry_4.txt",
+        "entry_5.txt",
+        "entry_6.txt",
+        "entry_7.txt",
+        "entry_8.txt",
+        "entry_9.txt",
+        "entry_10.txt"
+    ].sort(), "ListContent for bz2");
+    test.done();
+};
+exports.testInfobz2Size = function (test) {
+    test.expect(1);
+    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-bz2.tar.bz2').size, 5315, "GetInfo size for bz2");
+    test.done();
+};
+exports.testInfobz2Name = function (test) {
+    test.expect(1);
+    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-bz2.tar.bz2').name, "entry_1.txt", "GetInfo name for bz2");
+    test.done();
+};
+exports.testInfobz2DirFile = function (test) {
+    test.expect(1);
+    test.ok(!ArchiveManager.GetInfo('entry_1.txt', './test/test-bz2.tar.bz2').directory, "GetInfo directory for file for bz2");
+    test.done();
+};
+
+//Gzip
+exports.testReadgz = function (test) {
+    test.expect(1);
+    test.deepEqual(ArchiveManager.ListContent('./test/test-gz.tar.gz'), [
+        "entry_1.txt",
+        "entry_2.txt",
+        "entry_3.txt",
+        "entry_4.txt",
+        "entry_5.txt",
+        "entry_6.txt",
+        "entry_7.txt",
+        "entry_8.txt",
+        "entry_9.txt",
+        "entry_10.txt"
+    ].sort(), "ListContent for gz");
+    test.done();
+};
+exports.testInfogzSize = function (test) {
+    test.expect(1);
+    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-gz.tar.gz').size, 5315, "GetInfo size for gz");
+    test.done();
+};
+exports.testInfogzName = function (test) {
+    test.expect(1);
+    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-gz.tar.gz').name, "entry_1.txt", "GetInfo name for gz");
+    test.done();
+};
+exports.testInfogzDirFile = function (test) {
+    test.expect(1);
+    test.ok(!ArchiveManager.GetInfo('entry_1.txt', './test/test-gz.tar.gz').directory, "GetInfo directory for file for gz");
+    test.done();
+};
+
+//Xz
+exports.testReadxz = function (test) {
+    test.expect(1);
+    test.deepEqual(ArchiveManager.ListContent('./test/test-xz.tar.xz'), [
+        "entry_1.txt",
+        "entry_2.txt",
+        "entry_3.txt",
+        "entry_4.txt",
+        "entry_5.txt",
+        "entry_6.txt",
+        "entry_7.txt",
+        "entry_8.txt",
+        "entry_9.txt",
+        "entry_10.txt"
+    ].sort(), "ListContent for xz");
+    test.done();
+};
+exports.testInfoxzSize = function (test) {
+    test.expect(1);
+    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-xz.tar.xz').size, 5315, "GetInfo size for xz");
+    test.done();
+};
+exports.testInfoxzName = function (test) {
+    test.expect(1);
+    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-xz.tar.xz').name, "entry_1.txt", "GetInfo name for xz");
+    test.done();
+};
+exports.testInfoxzDirFile = function (test) {
+    test.expect(1);
+    test.ok(!ArchiveManager.GetInfo('entry_1.txt', './test/test-xz.tar.xz').directory, "GetInfo directory for file for xz");
     test.done();
 };

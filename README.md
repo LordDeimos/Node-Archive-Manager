@@ -11,7 +11,10 @@ As per usual, use your node package manager of choice to install this in your pr
 ```sh
 npm install archive-manager
 ```
-
+This will require node-gyp to be present, if you don't have it:
+```sh
+npm install -g node-gyp
+```
 ## Usage
 Here are some basic use cases:
 
@@ -40,7 +43,7 @@ if(ArchiveManager.WriteFromDisk(['path/to/file/1','path/to/file/2','path/to/file
 
 Append:
 
-In-Place edits are currently not supported byt libarchive, so this will be very slow for large archives
+In-Place edits are currently not supported by libarchive, so this will be very slow for large archives
 ```js
 if(ArchiveManager.Append('path/to/file','path/to/archive') === false){
     console.error("Failed")
@@ -60,19 +63,22 @@ var buffer = ArchiveManager.ReadBuffer('internal/path','path/to/archive');
 ```
 
 ## Building From Source
-This requires libarchive and node-gyp.
+This uses node-gyp to build
 
+### For Windows
+The libarchive package and its dependencies are provied for both 64 and 32 bit windows, so all you need to do is:
+```powershell
+npm install
+node-gyp rebuild
+```
+### For Linux
 For linux distributions, install the libarchive development package using your chosen packge manager, eg:
 ```sh
 sudo apt-get install libarchive-dev
-```
-To install node-gyp:
-```sh
-npm install -g node-gyp
 ```
 
 Then
 ```sh
 npm install
-node-gyp configure build
+node-gyp rebuild
 ```
