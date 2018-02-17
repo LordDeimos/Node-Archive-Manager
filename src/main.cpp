@@ -3,8 +3,8 @@
 #include <sstream>
 #include <nan.h>
 
-#include <archive.hpp>
-#include <archive_entry.hpp>
+#include "archive.hpp"
+#include "archive_entry.hpp"
 
 #define BLOCK_SIZE 10240
 
