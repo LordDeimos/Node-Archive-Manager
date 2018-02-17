@@ -20,7 +20,7 @@ std::vector<std::string> split(char* string, char delim);
 
 #pragma region Helpers
 
-Local<Array> view(Local<String> path){
+std::vector<std::string> view(const char* file){
   archive_t archive;
   archive_entry_t entry;
   int r;
@@ -29,17 +29,16 @@ Local<Array> view(Local<String> path){
   archive_read_support_filter_all(archive);
   archive_read_support_format_all(archive);
 
-  String::Utf8Value file(path);
-  Local<Array> array = New<Array>();
+  std::vector<std::string> array;
 
-  r = archive_read_open_filename(archive, *file, 10240);
+  r = archive_read_open_filename(archive, file, 10240);
   if (r != ARCHIVE_OK){
     Nan::ThrowError(archive_error_string(archive));
-    return New<Array>();
+    return std::vector<std::string>();
   }
   int i=0;
   while (archive_read_next_header(archive, &entry) != ARCHIVE_EOF) {
-    Nan::Set(array,i,New<String>(archive_entry_pathname(entry)).ToLocalChecked());
+    array.push_back(std::string(archive_entry_pathname(entry)));
     archive_read_data_skip(archive);
     i++;
   }
@@ -48,7 +47,7 @@ Local<Array> view(Local<String> path){
 
   if (r != ARCHIVE_OK){    
     Nan::ThrowError(archive_error_string(archive));
-    return New<Array>();
+    return std::vector<std::string>();
   }
   return array;
 }
@@ -273,8 +272,12 @@ Local<Boolean> appendLocal(Local<Array> newFiles, Local<String> archivePath){
   */
 
   std::string tempDir("./tmp/");
-
-  Local<Array> oldFiles = view(archivePath);
+  String::Utf8Value path(archivePath);
+  std::vector<std::string> content = view(*path);
+  Local<Array> oldFiles = Nan::New<Array>(content.size());
+  for(int i=0;i<content.size();i++){
+    Nan::Set(oldFiles,i,Nan::New<String>(content[i].c_str()).ToLocalChecked());
+  }
 
   for(int i=0;i<oldFiles->Length();i++){
     String::Utf8Value temp(oldFiles->Get(i)->ToString());
@@ -366,11 +369,18 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
 #pragma region Wrappers
 
 void ListContent(const Nan::FunctionCallbackInfo<Value>& args) {
-  if(args.Length()!=1){
-    Nan::ThrowError("This Takes One Argument");
+  if(args.Length()!=2){
+    Nan::ThrowError("This Takes Two Arguments");
     return;
   }
-  args.GetReturnValue().Set(view(args[0]->ToString()));
+  //if()
+  String::Utf8Value path(args[0]->ToString());
+  std::vector<std::string> content = view(*path);
+  Local<Array> output = Nan::New<Array>(content.size());
+  for(int i=0;i<content.size();i++){
+    Nan::Set(output,i,Nan::New<String>(content[i].c_str()).ToLocalChecked());
+  }
+  args.GetReturnValue().Set(output);
 }
 
 void GetInfo(const Nan::FunctionCallbackInfo<Value>& args){
