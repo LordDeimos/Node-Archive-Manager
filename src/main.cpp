@@ -1,10 +1,10 @@
-#include <string>
+#include <string.h>
 #include <iostream>
 #include <sstream>
 #include <nan.h>
 
-#include "archive.hpp"
-#include "archive_entry.hpp"
+#include <archive.h>
+#include <archive_entry.h>
 
 #define BLOCK_SIZE 10240
 
