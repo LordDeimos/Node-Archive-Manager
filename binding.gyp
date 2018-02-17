@@ -10,26 +10,17 @@
                     'conditions': [
                         ["target_arch == 'ia32'", {
                             'libraries': [
-                                "../lib/32/zlibstatic.lib",
-                                "../lib/32/liblzma.lib",
-                                "../lib/32/libbz2.exp",
-                                "../lib/32/libbz2-static.lib",
-                                "../lib/32/archive_static.lib"
+                                "../lib/32/*"
                             ]
                         }],
                         ["target_arch=='x64'", {
                             'libraries': [
-                                "../lib/64/zlibstatic.lib",
-                                "../lib/64/liblzma.lib",
-                                "../lib/64/libbz2.exp",
-                                "../lib/64/libbz2-static.lib",
-                                "../lib/64/archive_static.lib"
+                                "../lib/64/*"
                             ]
                         }]
                     ],
                     "defines": [
-                        "LIBARCHIVE_STATIC",
-                        "LIBBZ2_STATIC"
+                        "LIBARCHIVE_STATIC"
                     ],
                     "msvs_settings": {
                         "VCCLCompilerTool": {
