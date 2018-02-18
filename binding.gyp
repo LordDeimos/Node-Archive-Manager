@@ -36,7 +36,9 @@
                         "-larchive"
                     ],
                     'cflags!': ['-fno-exceptions'],
-                    'cflags_cc!': ['-fno-exceptions']
+                    'cflags_cc!': ['-fno-exceptions'],
+                    'cflags': ['-fexceptions'],
+                    'cflags_cc': ['-fexceptions']
                 }]
             ],
             "include_dirs": [
