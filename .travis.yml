@@ -3,7 +3,16 @@ language:
 - node_js
 - c++
 node_js: '0.10'
+
+addons:
+  apt:
+  sources:
+    - ubuntu-toolchain-r-test
+  packages:
+    - g++-4.9
+
 before_install:
+- eval "CC=gcc-4.9 && CXX=g++-4.9"
 - sudo apt-get update
 - sudo apt-get install libarchive-dev
 - npm install -g nodeunit

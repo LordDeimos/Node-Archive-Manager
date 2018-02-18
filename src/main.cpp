@@ -18,7 +18,7 @@ typedef struct archive_entry* archive_entry_t;
 
 std::vector<std::string> split(char* string, char delim);
 
-#pragma region Helpers
+#pragma region //Helpers
 
 std::vector<std::string> view(const char* file){
   archive_t archive;
@@ -33,7 +33,7 @@ std::vector<std::string> view(const char* file){
 
   r = archive_read_open_filename(archive, file, 10240);
   if (r != ARCHIVE_OK){
-    Nan::ThrowError(archive_error_string(archive));
+    throw std::exception(archive_error_string(archive));
     return std::vector<std::string>();
   }
   int i=0;
@@ -42,11 +42,11 @@ std::vector<std::string> view(const char* file){
     archive_read_data_skip(archive);
     i++;
   }
-
+  r = archive_read_close(archive);
   r = archive_read_free(archive);
 
-  if (r != ARCHIVE_OK){    
-    Nan::ThrowError(archive_error_string(archive));
+  if (r != ARCHIVE_OK){
+    throw std::exception(archive_error_string(archive));
     return std::vector<std::string>();
   }
   return array;
@@ -176,7 +176,7 @@ Local<Boolean> writeLocal(Local<Array> files, Local<String> archivePath){
     archive_entry_set_filetype(entry, AE_IFREG);
     archive_entry_set_perm(entry, 0644);
     archive_write_header(archive, entry);
-    fd = fopen(*filename, "w");
+    fd = fopen(*filename, "r");
     if(fd){
       len = fread(buff, sizeof(buff), sizeof(char),fd);
       while ( len > 0 ) {
@@ -191,6 +191,7 @@ Local<Boolean> writeLocal(Local<Array> files, Local<String> archivePath){
     Nan::ThrowError(archive_error_string(archive));
     return Nan::False();
   }
+  archive_write_close(archive);
   archive_write_free(archive);
 
   return Nan::True();
@@ -366,21 +367,66 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath){
 
 #pragma endregion
 
-#pragma region Wrappers
+#pragma region //Worker Classes
 
-void ListContent(const Nan::FunctionCallbackInfo<Value>& args) {
-  if(args.Length()!=2){
+class ViewWorker: public Nan::AsyncWorker{
+  private:
+    std::string path;
+    std::vector<std::string> files;
+
+  public: 
+    ViewWorker(Nan::Callback* callback, std::string path)
+      : AsyncWorker(callback){
+        this->path = path;
+        this->files = std::vector<std::string>();
+      }
+    
+    void Execute(){
+      try{
+        files = view(path.c_str());
+      }
+      catch(std::exception& e){
+        this->SetErrorMessage(e.what());
+      }
+    }
+
+    void HandleOKCallback(){
+      Nan::HandleScope scope;      
+      Local<Array> output = Nan::New<Array>(files.size());
+      for(int i=0;i<files.size();i++){
+        Nan::Set(output,i,Nan::New<String>(files[i].c_str()).ToLocalChecked());
+      }
+      Local<Value> argv[] = {Nan::Null(), output};
+      callback->Call(2,argv);
+    }
+    void HandleErrorCallback(){      
+      Nan::HandleScope scope;
+      Local<Value> argv[] = {Nan::New<String>(this->ErrorMessage()).ToLocalChecked(),Nan::Null()};
+      callback->Call(2,argv);
+    }
+};
+
+#pragma endregion
+
+#pragma region //Wrappers
+
+NAN_METHOD(ListContent) {
+  if(info.Length()!=2){
     Nan::ThrowError("This Takes Two Arguments");
     return;
   }
-  //if()
-  String::Utf8Value path(args[0]->ToString());
-  std::vector<std::string> content = view(*path);
-  Local<Array> output = Nan::New<Array>(content.size());
-  for(int i=0;i<content.size();i++){
-    Nan::Set(output,i,Nan::New<String>(content[i].c_str()).ToLocalChecked());
+  if(!info[0]->IsString()){
+    Nan::ThrowError("Expected Path as First Arg");
+    return;
   }
-  args.GetReturnValue().Set(output);
+  if(!info[1]->IsFunction()){
+    Nan::ThrowError("Expected Callback as Second Arg");
+    return;
+  }
+  String::Utf8Value utf8path(info[0]->ToString());
+  std::string path(*utf8path);
+  Callback* callback = new Callback(Nan::To<Function>(info[1]).ToLocalChecked());
+  Nan::AsyncQueueWorker(new ViewWorker(callback, path));
 }
 
 void GetInfo(const Nan::FunctionCallbackInfo<Value>& args){
@@ -440,7 +486,7 @@ void ReadBuffer(const Nan::FunctionCallbackInfo<Value>& args){
 
 #pragma endregion
 
-#pragma region Node
+#pragma region //Node
 
 NAN_MODULE_INIT(init) {
   Nan::Set(target, New<String>("ListContent").ToLocalChecked(),

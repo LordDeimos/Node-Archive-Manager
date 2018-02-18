@@ -5,19 +5,26 @@ const os = require('os');
 //Zip
 exports.testReadZip = function (test) {
     test.expect(1);
-    test.deepEqual(ArchiveManager.ListContent('./test/test-zip.zip'), [
-        "entry_1.txt",
-        "entry_2.txt",
-        "entry_3.txt",
-        "entry_4.txt",
-        "entry_5.txt",
-        "entry_6.txt",
-        "entry_7.txt",
-        "entry_8.txt",
-        "entry_9.txt",
-        "entry_10.txt"
-    ], "ListContent for zip");
-    test.done();
+    ArchiveManager.ListContent('./test/test-zip.zip', function (err, files) {
+        if (err) {
+            console.error(err);
+            test.done();
+            return;
+        }
+        test.deepEqual(files.sort(), [
+            "entry_1.txt",
+            "entry_2.txt",
+            "entry_3.txt",
+            "entry_4.txt",
+            "entry_5.txt",
+            "entry_6.txt",
+            "entry_7.txt",
+            "entry_8.txt",
+            "entry_9.txt",
+            "entry_10.txt"
+        ].sort(), "ListContent for zip");
+        test.done();
+    });
 };
 
 exports.testInfoZipSize = function (test) {
@@ -40,22 +47,36 @@ exports.testInfoZipDirFile = function (test) {
 
 exports.testWriteZipSingle = function (test) {
     test.expect(2);
-    test.ok(ArchiveManager.WriteFromDisk(['test_cases/entry_1.txt'], './test/test-write.zip'), "Write to zip");
-    test.deepEqual(ArchiveManager.ListContent('./test/test-write.zip'), [
-        "entry_1.txt"
-    ], "ListContent After Write");
-    test.done();
+    test.ok(ArchiveManager.WriteFromDisk(['test/entry_1.txt'], './test/test-write.zip'), "Write to zip");
+    ArchiveManager.ListContent('./test/test-write.zip', function (err, files) {
+        if (err) {
+            console.error(err);
+            test.done();
+            return;
+        }
+        test.deepEqual(files, [
+            "entry_1.txt"
+        ], "ListContent After Write");
+        test.done();
+    });
 };
 
 exports.testWriteZipMulti = function (test) {
     test.expect(2);
-    test.ok(ArchiveManager.WriteFromDisk(['test_cases/entry_1.txt', 'test_cases/entry_2.txt', 'test_cases/entry_3.txt'], './test/test-write.zip'), "Write to zip");
-    test.deepEqual(ArchiveManager.ListContent('./test/test-write.zip'), [
-        "entry_1.txt",
-        "entry_2.txt",
-        "entry_3.txt"
-    ], "ListContent After Write");
-    test.done();
+    test.ok(ArchiveManager.WriteFromDisk(['test/entry_1.txt', 'test/entry_2.txt', 'test/entry_3.txt'], './test/test-write.zip'), "Write to zip");
+    ArchiveManager.ListContent('./test/test-write.zip', function (err, files) {
+        if (err) {
+            console.error(err);
+            test.done();
+            return;
+        }
+        test.deepEqual(files, [
+            "entry_1.txt",
+            "entry_2.txt",
+            "entry_3.txt"
+        ], "ListContent After Write");
+        test.done();
+    });
 };
 
 exports.testExtract = function (test) {
@@ -92,7 +113,7 @@ exports.testAppendZip = function(test) {
 
 exports.testReadMemory = function (test) {
     test.expect(1);
-    test.deepEqual(fs.readFileSync('./test/entry_1.txt').toString(), ArchiveManager.ReadBuffer('entry_1.txt', './test/test-zip.zip').toString(), "ReadBuffer for file not in Zip");
+    test.deepEqual(fs.readFileSync('./test/entry_1.txt').toString(), ArchiveManager.ReadBuffer('entry_1.txt', './test/test-zip.zip').toString(), "ReadBuffer for file in Zip");
     test.done();
 };
 
@@ -105,19 +126,26 @@ exports.testReadMemoryNotThere = function (test) {
 //7z
 exports.testRead7z = function (test) {
     test.expect(1);
-    test.deepEqual(ArchiveManager.ListContent('./test/test-7z.7z'), [
-        "entry_1.txt",
-        "entry_2.txt",
-        "entry_3.txt",
-        "entry_4.txt",
-        "entry_5.txt",
-        "entry_6.txt",
-        "entry_7.txt",
-        "entry_8.txt",
-        "entry_9.txt",
-        "entry_10.txt"
-    ], "ListContent for 7zip");
-    test.done();
+    ArchiveManager.ListContent('./test/test-7z.7z', function (err, files) {
+        if(err){
+            console.log(err);            
+            test.done();
+            return;
+        }
+        test.deepEqual(files, [
+            "entry_1.txt",
+            "entry_2.txt",
+            "entry_3.txt",
+            "entry_4.txt",
+            "entry_5.txt",
+            "entry_6.txt",
+            "entry_7.txt",
+            "entry_8.txt",
+            "entry_9.txt",
+            "entry_10.txt"
+        ], "ListContent for 7zip");
+        test.done();
+    });
 };
 exports.testInfo7zSize = function (test) {
     test.expect(1);
@@ -138,19 +166,26 @@ exports.testInfo7zDirFile = function (test) {
 //tar
 exports.testReadTar = function (test) {
     test.expect(1);
-    test.deepEqual(ArchiveManager.ListContent('./test/test-tar.tar'), [
-        "entry_1.txt",
-        "entry_2.txt",
-        "entry_3.txt",
-        "entry_4.txt",
-        "entry_5.txt",
-        "entry_6.txt",
-        "entry_7.txt",
-        "entry_8.txt",
-        "entry_9.txt",
-        "entry_10.txt"
-    ].sort(), "ListContent for tar");
-    test.done();
+    ArchiveManager.ListContent('./test/test-tar.tar', function (err, files) {
+        if(err){
+            console.log(err);            
+            test.done();
+            return;
+        }
+        test.deepEqual(files, [
+            "entry_1.txt",
+            "entry_2.txt",
+            "entry_3.txt",
+            "entry_4.txt",
+            "entry_5.txt",
+            "entry_6.txt",
+            "entry_7.txt",
+            "entry_8.txt",
+            "entry_9.txt",
+            "entry_10.txt"
+        ].sort(), "ListContent for tar");
+        test.done();
+    });
 };
 exports.testInfotarSize = function (test) {
     test.expect(1);
@@ -171,19 +206,26 @@ exports.testInfotarDirFile = function (test) {
 //Bzip
 exports.testReadbz2 = function (test) {
     test.expect(1);
-    test.deepEqual(ArchiveManager.ListContent('./test/test-bz2.tar.bz2'), [
-        "entry_1.txt",
-        "entry_2.txt",
-        "entry_3.txt",
-        "entry_4.txt",
-        "entry_5.txt",
-        "entry_6.txt",
-        "entry_7.txt",
-        "entry_8.txt",
-        "entry_9.txt",
-        "entry_10.txt"
-    ].sort(), "ListContent for bz2");
-    test.done();
+    ArchiveManager.ListContent('./test/test-bz2.tar.bz2', function (err, files) {
+        if(err){
+            console.log(err);            
+            test.done();
+            return;
+        }
+        test.deepEqual(files.sort(), [
+            "entry_1.txt",
+            "entry_2.txt",
+            "entry_3.txt",
+            "entry_4.txt",
+            "entry_5.txt",
+            "entry_6.txt",
+            "entry_7.txt",
+            "entry_8.txt",
+            "entry_9.txt",
+            "entry_10.txt"
+        ].sort(), "ListContent for bz2");
+        test.done();
+    });
 };
 exports.testInfobz2Size = function (test) {
     test.expect(1);
@@ -204,19 +246,26 @@ exports.testInfobz2DirFile = function (test) {
 //Gzip
 exports.testReadgz = function (test) {
     test.expect(1);
-    test.deepEqual(ArchiveManager.ListContent('./test/test-gz.tar.gz'), [
-        "entry_1.txt",
-        "entry_2.txt",
-        "entry_3.txt",
-        "entry_4.txt",
-        "entry_5.txt",
-        "entry_6.txt",
-        "entry_7.txt",
-        "entry_8.txt",
-        "entry_9.txt",
-        "entry_10.txt"
-    ].sort(), "ListContent for gz");
-    test.done();
+    ArchiveManager.ListContent('./test/test-gz.tar.gz', function (err, files) {
+        if(err){
+            console.log(err);            
+            test.done();
+            return;
+        }
+        test.deepEqual(files.sort(), [
+            "entry_1.txt",
+            "entry_2.txt",
+            "entry_3.txt",
+            "entry_4.txt",
+            "entry_5.txt",
+            "entry_6.txt",
+            "entry_7.txt",
+            "entry_8.txt",
+            "entry_9.txt",
+            "entry_10.txt"
+        ].sort(), "ListContent for gz");
+        test.done();
+    });
 };
 exports.testInfogzSize = function (test) {
     test.expect(1);
@@ -237,19 +286,26 @@ exports.testInfogzDirFile = function (test) {
 //Xz
 exports.testReadxz = function (test) {
     test.expect(1);
-    test.deepEqual(ArchiveManager.ListContent('./test/test-xz.tar.xz'), [
-        "entry_1.txt",
-        "entry_2.txt",
-        "entry_3.txt",
-        "entry_4.txt",
-        "entry_5.txt",
-        "entry_6.txt",
-        "entry_7.txt",
-        "entry_8.txt",
-        "entry_9.txt",
-        "entry_10.txt"
-    ].sort(), "ListContent for xz");
-    test.done();
+    ArchiveManager.ListContent('./test/test-xz.tar.xz', function (err, files) {
+        if(err){
+            console.log(err);            
+            test.done();
+            return;
+        }
+        test.deepEqual(files, [
+            "entry_1.txt",
+            "entry_2.txt",
+            "entry_3.txt",
+            "entry_4.txt",
+            "entry_5.txt",
+            "entry_6.txt",
+            "entry_7.txt",
+            "entry_8.txt",
+            "entry_9.txt",
+            "entry_10.txt"
+        ].sort(), "ListContent for xz");
+        test.done();
+    });
 };
 exports.testInfoxzSize = function (test) {
     test.expect(1);
