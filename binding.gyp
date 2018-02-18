@@ -36,7 +36,7 @@
                         "-larchive"
                     ],
                     'cflags':[
-                        '-fexception'
+                        '-fexceptions'
                     ]
                 }]
             ],

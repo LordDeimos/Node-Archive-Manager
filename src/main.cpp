@@ -52,7 +52,7 @@ std::vector<std::string> view(const char* file){
   return array;
 }
 
-Local<Object> info(Local<String> fileName, Local<String> archivePath){
+Local<Object> getinfo(Local<String> fileName, Local<String> archivePath){
   archive_t archive;
   archive_entry_t entry;
   int r;
@@ -429,55 +429,63 @@ NAN_METHOD(ListContent) {
   Nan::AsyncQueueWorker(new ViewWorker(callback, path));
 }
 
-void GetInfo(const Nan::FunctionCallbackInfo<Value>& args){
-  if(args.Length()!=2){
-    Nan::ThrowError("Requires two arguments");
+NAN_METHOD(GetInfo){
+  if(info.Length()!=2){
+    Nan::ThrowError("Usage: GetInfo(fileName, archivePath)");
     return;
   }
-  args.GetReturnValue().Set(info(args[0]->ToString(),args[1]->ToString()));
+  if(!info[0]->IsString()){
+    Nan::ThrowError("fileName Must be a string.");
+    return;
+  }
+  if(!info[1]->IsString()){
+    Nan::ThrowError("archivePath Must be a string.");
+    return;
+  }
+  info.GetReturnValue().Set(getinfo(info[0]->ToString(),info[1]->ToString()));
 }
 
-void WriteFromDisk(const Nan::FunctionCallbackInfo<Value>& args){
-  if(args.Length()==2){
-    if(!args[0]->IsArray()){
+NAN_METHOD(WriteFromDisk){
+  if(info.Length()==2){
+    if(!info[0]->IsArray()){
       Nan::ThrowError("newFiles Must be Array");
       return;
     }
-    args.GetReturnValue().Set(writeLocal(Local<Array>::Cast(args[0]),args[1]->ToString()));
+    info.GetReturnValue().Set(writeLocal(Local<Array>::Cast(info[0]),info[1]->ToString()));
   }
   else{
     Nan::ThrowError("Usage: WriteFromDisk([newFiles], archivePath)");
   }
 }
 
-void Append(const Nan::FunctionCallbackInfo<Value>& args){
-  if(args.Length()==2){
-    if(!args[0]->IsArray()){
+NAN_METHOD(Append){
+  if(info.Length()==2){
+    if(!info[0]->IsArray()){
       Nan::ThrowError("newFiles Must be Array");
       return;
     }
-    args.GetReturnValue().Set(appendLocal(Local<Array>::Cast(args[0]),args[1]->ToString()));
+    info.GetReturnValue().Set(appendLocal(Local<Array>::Cast(info[0]),info[1]->ToString()));
   }
   else{
     Nan::ThrowError("Usage: Append([newFiles], archivePath)");
   }
 }
 
-void Extract(const Nan::FunctionCallbackInfo<Value>& args){
-  if(args.Length()==1){
-    args.GetReturnValue().Set(extract(args[0]->ToString(),Nan::New<String>("./").ToLocalChecked()));
+NAN_METHOD(Extract){
+  if(info.Length()==1){
+    info.GetReturnValue().Set(extract(info[0]->ToString(),Nan::New<String>("./").ToLocalChecked()));
   }
-  else if(args.Length()==2){    
-    args.GetReturnValue().Set(extract(args[0]->ToString(),args[1]->ToString()));
+  else if(info.Length()==2){    
+    info.GetReturnValue().Set(extract(info[0]->ToString(),info[1]->ToString()));
   }
   else{
     Nan::ThrowError("Usage: Extract(archivePath, outputPath)");
   }
 }
 
-void ReadBuffer(const Nan::FunctionCallbackInfo<Value>& args){
-  if(args.Length()==2){
-    args.GetReturnValue().Set(getData(args[0]->ToString(),args[1]->ToString()));
+NAN_METHOD(ReadBuffer){
+  if(info.Length()==2){
+    info.GetReturnValue().Set(getData(info[0]->ToString(),info[1]->ToString()));
   }
   else{
     Nan::ThrowError("Usage: ReadBuffer(internalPath, archivePath)");
