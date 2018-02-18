@@ -137,14 +137,28 @@ exports.testAppendZip = function(test) {
 
 exports.testReadMemory = function (test) {
     test.expect(1);
-    test.deepEqual(fs.readFileSync('./test/entry_1.txt').toString(), ArchiveManager.ReadBuffer('entry_1.txt', './test/test-zip.zip').toString(), "ReadBuffer for file in Zip");
-    test.done();
+    ArchiveManager.ReadBuffer('entry_1.txt', './test/test-zip.zip',function(err,data){
+        if(err){
+            console.log(err);
+            test.done();
+            return;
+        }
+        test.deepEqual(fs.readFileSync('./test/entry_1.txt').toString(), data.toString(), "ReadBuffer for file in Zip");
+        test.done();
+    });
 };
 
 exports.testReadMemoryNotThere = function (test) {
     test.expect(1);
-    test.equal(undefined, ArchiveManager.ReadBuffer('entry_11.txt', './test/test-zip.zip').length, "ReadBuffer for file not in Zip");
-    test.done();
+    ArchiveManager.ReadBuffer('entry_11.txt', './test/test-zip.zip', function(err,data){
+        if(err){
+            console.log(err);
+            test.done();
+            return;
+        }
+        test.equal(data, undefined, "ReadBuffer for file not in Zip");
+        test.done();
+    });
 };
 
 //7z

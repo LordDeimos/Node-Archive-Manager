@@ -310,10 +310,7 @@ bool appendLocal(Local<Array> newFiles, Local<String> archivePath) {
     return false;
 }
 
-Local<Object> getData(Local<String> internalPath, Local<String> archivePath) {
-    String::Utf8Value filename(archivePath);
-    String::Utf8Value internalFile(internalPath);
-
+std::vector<char> getData(std::string internalPath, std::string archivePath) {
     archive_t archive;
     archive_entry_t entry;
     int response;
@@ -323,24 +320,24 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath) {
     archive = archive_read_new();
     archive_read_support_format_all(archive);
     archive_read_support_compression_all(archive);
-    if ((response = archive_read_open_filename(archive, *filename, BLOCK_SIZE))) {
+    if ((response = archive_read_open_filename(archive, archivePath.c_str(), BLOCK_SIZE))) {
         throw std::runtime_error(archive_error_string(archive));
-        return Nan::New<Object>();
+        return std::vector<char>();
     }
 
     while ((response = archive_read_next_header(archive, &entry)) != ARCHIVE_EOF) {
         if (response < ARCHIVE_WARN) {
             throw std::runtime_error(archive_error_string(archive));
-            return Nan::New<Object>();
+            return std::vector<char>();
         } else if (archive_entry_size(entry) > 0) {
-            if (!strcmp(archive_entry_pathname(entry), *internalFile)) {
+            if (!strcmp(archive_entry_pathname(entry), internalPath.c_str())) {
                 const void* buffer;
                 size_t size;
                 int64_t offset;
                 while ((response = archive_read_data_block(archive, &buffer, &size, &offset)) != ARCHIVE_EOF) {
                     if (response < ARCHIVE_OK) {
                         throw std::runtime_error(archive_error_string(archive));
-                        return Nan::New<Object>();
+                        return std::vector<char>();
                     }
                     totalsize += size;
                     if (size > 0) {
@@ -352,10 +349,7 @@ Local<Object> getData(Local<String> internalPath, Local<String> archivePath) {
         }
     }
     archive_read_free(archive);
-    if (output.size() > 0) {
-        return Nan::CopyBuffer(output.data(), static_cast<uint32_t>(output.size())).ToLocalChecked();
-    }
-    return Nan::New<Object>();
+    return output;
 }
 
     /*Local<Boolean> writeMemory(Local<String> file, Local<String> archivePath){
@@ -524,6 +518,53 @@ class ExtractWorker : public Nan::AsyncWorker {
 	}
 };
 
+class ReadWorker : public Nan::AsyncWorker {
+	private:
+	std::string internalPath, archivePath;
+	std::vector<char> output;
+
+	public:
+	ReadWorker(Callback* callback, std::string internalPath, std::string archivePath) : AsyncWorker(callback){
+		this->internalPath = internalPath;
+		this->archivePath = archivePath;
+	}
+
+	void Execute(){
+		try{
+			output = getData(internalPath,archivePath);
+		}
+		catch(std::exception& e){
+			this->SetErrorMessage(e.what());
+		}
+	}
+
+	void HandleOKCallback(){
+		Nan::HandleScope scope;
+		if(output.size()){
+			Local<Value> argv[] = {
+				Nan::Null(),
+				Nan::CopyBuffer(output.data(), output.size()).ToLocalChecked()
+			};
+        	callback->Call(2, argv);
+		}
+		else{
+			Local<Value> argv[] = {
+				Nan::Null(),
+				Nan::Undefined()
+			};
+        	callback->Call(2, argv);
+		}
+	}
+
+	void HandleErrorCallback(){
+        Nan::HandleScope scope;
+        Local<Value> argv[] = {
+            Nan::New<String>(this->ErrorMessage()).ToLocalChecked(),
+            Nan::Null()};
+        callback->Call(2, argv);
+	}
+};
+
 #pragma endregion
 
 #pragma region //Wrappers
@@ -645,10 +686,23 @@ NAN_METHOD(Extract) {
 }
 
 NAN_METHOD(ReadBuffer) {
-    if (info.Length() == 2) {
-        info.GetReturnValue().Set(getData(info[0]->ToString(), info[1]->ToString()));
+    if (info.Length() == 3) {		
+        if (!info[0]->IsString()) {
+            Nan::ThrowError("internalPath Must be string");
+            return;
+        }		
+        if (!info[1]->IsString()) {
+            Nan::ThrowError("archivePath Must be string");
+            return;
+        }
+        if (!info[2]->IsFunction()) {
+            Nan::ThrowError("callback Must be function");
+            return;
+        }
+		Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
+		Nan::AsyncQueueWorker(new ReadWorker(callback,std::string(*String::Utf8Value(info[0]->ToString())),std::string(*String::Utf8Value(info[1]->ToString()))));
     } else {
-        Nan::ThrowError("Usage: ReadBuffer(internalPath, archivePath)");
+        Nan::ThrowError("Usage: ReadBuffer(internalPath, archivePath, callback)");
     }
 }
 
