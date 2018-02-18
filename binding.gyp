@@ -34,6 +34,9 @@
                 ['OS=="linux"', {
                     'libraries': [
                         "-larchive"
+                    ],
+                    'cflags':[
+                        '-fexception'
                     ]
                 }]
             ],
