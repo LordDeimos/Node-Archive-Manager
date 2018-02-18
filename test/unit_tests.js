@@ -28,7 +28,7 @@ exports.testReadZip = function (test) {
 };
 
 exports.testInfoZip = function (test) {
-    if(process.system!=='linux'){
+    if(process.platform!=='linux'){
         test.expect(3);
     }
     else{
@@ -40,7 +40,7 @@ exports.testInfoZip = function (test) {
             test.done();
             return;
         } 
-        if(process.system!=='linux'){
+        if(process.platform!=='linux'){
             test.equal(info.name, "entry_1.txt", "GetInfo name for zip");
         }
         test.equal(info.size, 5315, "GetInfo size for zip");
@@ -153,7 +153,7 @@ exports.testRead7z = function (test) {
 };
 
 exports.testInfo7z = function (test) {
-    if(process.system!=='linux'){
+    if(process.platform!=='linux'){
         test.expect(3);
     }
     else{
@@ -165,7 +165,7 @@ exports.testInfo7z = function (test) {
             test.done();
             return;
         } 
-        if(process.system!=='linux'){
+        if(process.platform!=='linux'){
             test.equal(info.name, "entry_1.txt", "GetInfo name for 7z");
         }
         test.equal(info.size, 5315, "GetInfo size for 7z");
@@ -200,7 +200,7 @@ exports.testReadTar = function (test) {
 };
 
 exports.testInfotar = function (test) {
-    if(process.system!=='linux'){
+    if(process.platform!=='linux'){
         test.expect(3);
     }
     else{
@@ -212,7 +212,7 @@ exports.testInfotar = function (test) {
             test.done();
             return;
         }
-        if(process.system!=='linux'){
+        if(process.platform!=='linux'){
             test.equal(info.name, "entry_1.txt", "GetInfo name for tar");
         }
         test.equal(info.size, 5315, "GetInfo size for tar");
@@ -247,7 +247,7 @@ exports.testReadbz2 = function (test) {
 };
 
 exports.testInfobz2 = function (test) {
-    if(process.system!=='linux'){
+    if(process.platform!=='linux'){
         test.expect(3);
     }
     else{
@@ -259,7 +259,7 @@ exports.testInfobz2 = function (test) {
             test.done();
             return;
         } 
-        if(process.system!=='linux'){
+        if(process.platform!=='linux'){
             test.equal(info.name, "entry_1.txt", "GetInfo name for bz2");
         }
         test.equal(info.size, 5315, "GetInfo size for bz2");
@@ -294,7 +294,7 @@ exports.testReadgz = function (test) {
 };
 
 exports.testInfogz = function (test) {
-    if(process.system!=='linux'){
+    if(process.platform!=='linux'){
         test.expect(3);
     }
     else{
@@ -306,7 +306,7 @@ exports.testInfogz = function (test) {
             test.done();
             return;
         } 
-        if(process.system!=='linux'){
+        if(process.platform!=='linux'){
             test.equal(info.name, "entry_1.txt", "GetInfo name for gz");
         }
         test.equal(info.size, 5315, "GetInfo size for gz");
@@ -341,7 +341,7 @@ exports.testReadxz = function (test) {
 };
 
 exports.testInfoxz = function (test) {
-    if(process.system!=='linux'){
+    if(process.platform!=='linux'){
         test.expect(3);
     }
     else{
@@ -353,7 +353,7 @@ exports.testInfoxz = function (test) {
             test.done();
             return;
         } 
-        if(process.system!=='linux'){
+        if(process.platform!=='linux'){
             test.equal(info.name, "entry_1.txt", "GetInfo name for xz");
         }
         test.equal(info.size, 5315, "GetInfo size for xz");
