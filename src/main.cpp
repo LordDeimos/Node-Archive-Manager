@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdexcept>
 #include <nan.h>
 #include <sstream>
 #include <string.h>
@@ -127,7 +128,6 @@ std::vector<std::string> view(const char* file) {
 		archive_read_data_skip(archive);
 		i++;
 	}
-	r = archive_read_close(archive);
 	r = archive_read_free(archive);
 
 	if (r != ARCHIVE_OK) {
@@ -387,8 +387,8 @@ class ViewWorker : public Nan::AsyncWorker {
 	void Execute() {
 		try {
 			files = view(path.c_str());
-		} catch (std::exception& e) {
-			this->SetErrorMessage(e.what());
+		} catch (const char* e) {
+			this->SetErrorMessage(e);
 		}
 	}
 
@@ -424,8 +424,8 @@ class InfoWorker : public Nan::AsyncWorker {
     try{
 		  data = getinfo(internalPath.c_str(), archivePath.c_str());
     }
-    catch(std::exception& e){
-      this->SetErrorMessage(e.what());
+    catch(const char* e){
+      this->SetErrorMessage(e);
     }
 	}
 

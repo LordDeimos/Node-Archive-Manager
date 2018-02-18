@@ -28,21 +28,18 @@ exports.testReadZip = function (test) {
 };
 
 exports.testInfoZipSize = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-zip.zip').size, 5315, "GetInfo size for zip");
-    test.done();
-};
-
-exports.testInfoZipName = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-zip.zip').name, "entry_1.txt", "GetInfo name for zip");
-    test.done();
-};
-
-exports.testInfoZipDirFile = function (test) {
-    test.expect(1);
-    test.ok(!ArchiveManager.GetInfo('entry_1.txt', './test/test-zip.zip').directory, "GetInfo directory for file for zip");
-    test.done();
+    test.expect(3);
+    ArchiveManager.GetInfo('entry_1.txt', './test/test-zip.zip',function(err,info){
+        if(err){
+            console.error(err);
+            test.done();
+            return;
+        }
+        test.equal(info.name, "entry_1.txt", "GetInfo name for zip");
+        test.equal(info.size, 5315, "GetInfo size for zip");
+        test.ok(!info.directory, "GetInfo type for zip");
+        test.done();
+    });
 };
 
 exports.testWriteZipSingle = function (test) {
@@ -147,20 +144,20 @@ exports.testRead7z = function (test) {
         test.done();
     });
 };
+
 exports.testInfo7zSize = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-7z.7z').size, 5315, "GetInfo size for 7zip");
-    test.done();
-};
-exports.testInfo7zName = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-7z.7z').name, "entry_1.txt", "GetInfo name for 7zip");
-    test.done();
-};
-exports.testInfo7zDirFile = function (test) {
-    test.expect(1);
-    test.ok(!ArchiveManager.GetInfo('entry_1.txt', './test/test-7z.7z').directory, "GetInfo directory for file for 7zip");
-    test.done();
+    test.expect(3);
+    ArchiveManager.GetInfo('entry_1.txt', './test/test-7z.7z',function(err,info){
+        if(err){
+            console.error(err);
+            test.done();
+            return;
+        }
+        test.equal(info.name, "entry_1.txt", "GetInfo name for 7z");
+        test.equal(info.size, 5315, "GetInfo size for 7z");
+        test.ok(!info.directory, "GetInfo type for 7z");
+        test.done();
+    });
 };
 
 //tar
@@ -187,20 +184,20 @@ exports.testReadTar = function (test) {
         test.done();
     });
 };
+
 exports.testInfotarSize = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-tar.tar').size, 5315, "GetInfo size for tar");
-    test.done();
-};
-exports.testInfotarName = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-tar.tar').name, "entry_1.txt", "GetInfo name for tar");
-    test.done();
-};
-exports.testInfotarDirFile = function (test) {
-    test.expect(1);
-    test.ok(!ArchiveManager.GetInfo('entry_1.txt', './test/test-tar.tar').directory, "GetInfo directory for file for tar");
-    test.done();
+    test.expect(3);
+    ArchiveManager.GetInfo('entry_1.txt', './test/test-tar.tar',function(err,info){
+        if(err){
+            console.error(err);
+            test.done();
+            return;
+        }
+        test.equal(info.name, "entry_1.txt", "GetInfo name for tar");
+        test.equal(info.size, 5315, "GetInfo size for tar");
+        test.ok(!info.directory, "GetInfo type for tar");
+        test.done();
+    });
 };
 
 //Bzip
@@ -227,20 +224,20 @@ exports.testReadbz2 = function (test) {
         test.done();
     });
 };
+
 exports.testInfobz2Size = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-bz2.tar.bz2').size, 5315, "GetInfo size for bz2");
-    test.done();
-};
-exports.testInfobz2Name = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-bz2.tar.bz2').name, "entry_1.txt", "GetInfo name for bz2");
-    test.done();
-};
-exports.testInfobz2DirFile = function (test) {
-    test.expect(1);
-    test.ok(!ArchiveManager.GetInfo('entry_1.txt', './test/test-bz2.tar.bz2').directory, "GetInfo directory for file for bz2");
-    test.done();
+    test.expect(3);
+    ArchiveManager.GetInfo('entry_1.txt', './test/test-bz2.tar.bz2',function(err,info){
+        if(err){
+            console.error(err);
+            test.done();
+            return;
+        }
+        test.equal(info.name, "entry_1.txt", "GetInfo name for bz2");
+        test.equal(info.size, 5315, "GetInfo size for bz2");
+        test.ok(!info.directory, "GetInfo type for bz2");
+        test.done();
+    });
 };
 
 //Gzip
@@ -267,20 +264,20 @@ exports.testReadgz = function (test) {
         test.done();
     });
 };
+
 exports.testInfogzSize = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-gz.tar.gz').size, 5315, "GetInfo size for gz");
-    test.done();
-};
-exports.testInfogzName = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-gz.tar.gz').name, "entry_1.txt", "GetInfo name for gz");
-    test.done();
-};
-exports.testInfogzDirFile = function (test) {
-    test.expect(1);
-    test.ok(!ArchiveManager.GetInfo('entry_1.txt', './test/test-gz.tar.gz').directory, "GetInfo directory for file for gz");
-    test.done();
+    test.expect(3);
+    ArchiveManager.GetInfo('entry_1.txt', './test/test-gz.tar.gz',function(err,info){
+        if(err){
+            console.error(err);
+            test.done();
+            return;
+        }
+        test.equal(info.name, "entry_1.txt", "GetInfo name for gz");
+        test.equal(info.size, 5315, "GetInfo size for gz");
+        test.ok(!info.directory, "GetInfo type for gz");
+        test.done();
+    });
 };
 
 //Xz
@@ -307,18 +304,18 @@ exports.testReadxz = function (test) {
         test.done();
     });
 };
-exports.testInfoxzSize = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-xz.tar.xz').size, 5315, "GetInfo size for xz");
-    test.done();
-};
-exports.testInfoxzName = function (test) {
-    test.expect(1);
-    test.equal(ArchiveManager.GetInfo('entry_1.txt', './test/test-xz.tar.xz').name, "entry_1.txt", "GetInfo name for xz");
-    test.done();
-};
-exports.testInfoxzDirFile = function (test) {
-    test.expect(1);
-    test.ok(!ArchiveManager.GetInfo('entry_1.txt', './test/test-xz.tar.xz').directory, "GetInfo directory for file for xz");
-    test.done();
+
+exports.testInfoxz = function (test) {
+    test.expect(3);
+    ArchiveManager.GetInfo('entry_1.txt', './test/test-xz.tar.xz',function(err,info){
+        if(err){
+            console.error(err);
+            test.done();
+            return;
+        }
+        test.equal(info.name, "entry_1.txt", "GetInfo name for xz");
+        test.equal(info.size, 5315, "GetInfo size for xz");
+        test.ok(!info.directory, "GetInfo type for xz");
+        test.done();
+    });
 };
