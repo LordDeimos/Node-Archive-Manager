@@ -49,7 +49,7 @@ exports.testInfoZip = function (test) {
 };
 
 exports.testWriteZipSingle = function (test) {
-    test.expect(2);
+    test.expect(3);
     ArchiveManager.WriteFromDisk(['test/entry_1.txt'], './test/test-write.zip', function (err, outcome) {
         if (err) {
             console.log(err);
@@ -66,13 +66,21 @@ exports.testWriteZipSingle = function (test) {
             test.deepEqual(files, [
                 "entry_1.txt"
             ], "ListContent After Write");
-            test.done();
+            ArchiveManager.GetInfo('entry_1.txt','./test/test-write.zip',function(err,info){
+                if(err){
+                    console.log(err);
+                    test.done();
+                    return;
+                }
+                test.equal(info.size,5315,"GetInfo size after Write");
+                test.done();
+            });
         });
     });
 };
 
 exports.testWriteZipMulti = function (test) {
-    test.expect(2);
+    test.expect(3);
     ArchiveManager.WriteFromDisk(['test/entry_1.txt', 'test/entry_2.txt', 'test/entry_3.txt'], './test/test-write.zip', function (err, outcome) {
         if (err) {
             console.error(err);
@@ -91,7 +99,15 @@ exports.testWriteZipMulti = function (test) {
                 "entry_2.txt",
                 "entry_3.txt"
             ], "ListContent After Write");
-            test.done();
+            ArchiveManager.GetInfo('entry_1.txt','./test/test-write.zip',function(err,info){
+                if(err){
+                    console.log(err);
+                    test.done();
+                    return;
+                }
+                test.equal(info.size,5315,"GetInfo size after Write");
+                test.done();
+            });
         });
     });
 };
@@ -122,18 +138,32 @@ exports.testExtract = function (test) {
     });
 };
 
-/* Fails on travis for some reason, but works locally
+/* Fails on travis for some reason, but works locally*/
 exports.testAppendZip = function(test) {
     test.expect(2);
-    test.ok(ArchiveManager.Append(['test_cases/entry_4.txt'],'./test/test-write.zip'), "Write to zip");
-    test.deepEqual(ArchiveManager.ListContent('./test/test-write.zip').sort(),[
-        "entry_1.txt",
-        "entry_2.txt",
-        "entry_3.txt",
-        "entry_4.txt"
-        ].sort(), "ListContent After Write");
-    test.done();
-};*/
+    ArchiveManager.Append(['test/entry_4.txt'],'./test/test-write.zip', function(err,outcome){
+        if(err){
+            console.log(err);
+            test.done();
+            return;
+        }
+        test.ok(outcome, "Write to zip");
+        ArchiveManager.ListContent('./test/test-write.zip',function(err,files){
+            if(err){
+                console.error(err);
+                test.done();
+                return;
+            }
+            test.deepEqual(files.sort(),[
+                "entry_1.txt",
+                "entry_2.txt",
+                "entry_3.txt",
+                "entry_4.txt"
+                ].sort(), "ListContent After Write");
+            test.done();
+        });
+    });
+};
 
 exports.testReadMemory = function (test) {
     test.expect(1);
