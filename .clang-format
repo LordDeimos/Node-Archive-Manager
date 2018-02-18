@@ -1,0 +1,13 @@
+BasedOnStyle: LLVM
+Language: Cpp
+IndentWidth: 2
+UseTab: Always
+BreakBeforeBraces: Attach
+AllowShortIfStatementsOnASingleLine: false
+IndentCaseLabels: true
+SortIncludes: true
+PointerAlignment: Left
+BreakStringLiterals: false
+ColumnLimit: 0
+PenaltyBreakString: 1000
+PenaltyBreakComment: 1000
