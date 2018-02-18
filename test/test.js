@@ -1,6 +1,12 @@
 const ArchiveManager = require('../build/Release/manager');
 
-ArchiveManager.ListContent('./test/test-zip.zip',function(err,files){
+/*ArchiveManager.ListContent('./test/test-zip.zip',function(err,files){
     console.log(files);
+});*/
+ArchiveManager.GetInfo('entry_1.txt','./test/test-tar.tar',function(err,info){
+    if(err){
+        console.error(err);
+        return;
+    }
+    console.log(info.directory);
 });
-//console.log(ArchiveManager.ReadBuffer('page007.jpeg','O:\\Comics\\Noragami volume 1.cbz').toString('base64'));
