@@ -98,21 +98,28 @@ exports.testWriteZipMulti = function (test) {
 
 exports.testExtract = function (test) {
     test.expect(2);
-    test.ok(ArchiveManager.Extract('./test/test-zip.zip', './test/output/'), "Extract 7zip");
-    var files = fs.readdirSync("./test/output/");
-    test.deepEqual(files, [
-        "entry_1.txt",
-        "entry_2.txt",
-        "entry_3.txt",
-        "entry_4.txt",
-        "entry_5.txt",
-        "entry_6.txt",
-        "entry_7.txt",
-        "entry_8.txt",
-        "entry_9.txt",
-        "entry_10.txt"
-    ].sort());
-    test.done();
+    ArchiveManager.Extract('./test/test-zip.zip', './test/output/',function(err,outcome){
+        if(err){
+            console.error(err);
+            test.done();
+            return;
+        }
+        test.ok(outcome, "Extract 7zip");
+        var files = fs.readdirSync("./test/output/");
+        test.deepEqual(files, [
+            "entry_1.txt",
+            "entry_2.txt",
+            "entry_3.txt",
+            "entry_4.txt",
+            "entry_5.txt",
+            "entry_6.txt",
+            "entry_7.txt",
+            "entry_8.txt",
+            "entry_9.txt",
+            "entry_10.txt"
+        ].sort());
+        test.done();
+    });
 };
 
 /* Fails on travis for some reason, but works locally
