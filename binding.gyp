@@ -35,9 +35,8 @@
                     'libraries': [
                         "-larchive"
                     ],
-                    'cflags':[
-                        '-fexceptions'
-                    ]
+                    'cflags!': ['-fno-exceptions'],
+                    'cflags_cc!': ['-fno-exceptions']
                 }]
             ],
             "include_dirs": [
@@ -53,7 +52,7 @@
                     'conditions': [
                         ["target_arch == 'ia32'", {
                             "copies": [{
-                                "files": [ "./lib/32/liblzma.dll"],
+                                "files": ["./lib/32/liblzma.dll"],
                                 "destination": "./build/Release/",
                             }]
                         }],
