@@ -9,10 +9,10 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - g++-4.9
+      - g++-7
 
 before_install:
-- eval "CC=gcc-4.9 && CXX=g++-4.9"
+- eval "CC=gcc-7 && CXX=g++-7"
 - sudo apt-get update
 - sudo apt-get install libarchive-dev
 - npm install -g nodeunit
