@@ -16,51 +16,40 @@ This will require node-gyp to be present, if you don't have it:
 npm install -g node-gyp
 ```
 ## Usage
-Here are some basic use cases:
+Here is a basic use case:
 
-Require:
 ```js
 const ArchiveManager = require('archive-manager');
-```
 
-ListContent:
+ArchiveManager.Content('path/to/archive',function(error,files){
+    if(error){
+        console.error(error);
+        return;
+    }
+    files.forEach(function(file){
+        ArchiveManager.GetInfo(file,'path/to/archive',function(error,info){
+            if(error){
+                console.error(error);
+                return;
+            }
+            console.log(info);
+        });
+    });
+});
+```
+### API
+There are six functions in this module:
 ```js
-var content = ArchiveManager.ListContent('path/to/archive');
-
+Content()
+GetInfo()
+Create()
+Append()
+Extract()
+Read()
 ```
-
-GetInfo:
-```js
-var info = ArchiveManager.GetInfo('internal/file','path/to/archive');
-```
-
-WriteFromDisk:
-```js
-if(ArchiveManager.WriteFromDisk(['path/to/file/1','path/to/file/2','path/to/file/3'],'path/to/archive') === false){
-    console.error("Failed")
-}
-```
-
-Append:
+For more detail view the [wiki](https://github.com/LordDeimos/Node-Archive-Manager/wiki/API).
 
 In-Place edits are currently not supported by libarchive, so this will be very slow for large archives
-```js
-if(ArchiveManager.Append('path/to/file','path/to/archive') === false){
-    console.error("Failed")
-}
-```
-
-Extract:
-```js
-if(ArchiveManager.Extract('path/to/archive','path/to/output') === false){
-    console.error("Failed")
-}
-```
-
-ReadBuffer:
-```js
-var buffer = ArchiveManager.ReadBuffer('internal/path','path/to/archive');
-```
 
 ## Building From Source
 This uses node-gyp to build

@@ -387,17 +387,6 @@ std::vector<char> getData(std::string internalPath, std::string archivePath) {
     return output;
 }
 
-    /*Local<Boolean> writeMemory(Local<String> file, Local<String> archivePath){
-  //This might take some more doing
-  return Nan::False();
-}*/
-
-    /**
- * ToDo
- * - Remove file/folder from archive
- * - Append/Write from in memory
-*/
-
 #pragma endregion
 
 #pragma region //Worker Classes
@@ -637,7 +626,7 @@ class AppendWorker : public Nan::AsyncWorker {
 
 #pragma region //Wrappers
 
-NAN_METHOD(ListContent) {
+NAN_METHOD(Content) {
     if (info.Length() != 2) {
         Nan::ThrowError("This Takes Two Arguments");
         return;
@@ -679,7 +668,7 @@ NAN_METHOD(GetInfo) {
     Nan::AsyncQueueWorker(new InfoWorker(callback, internalPath, archivePath));
 }
 
-NAN_METHOD(WriteFromDisk) {
+NAN_METHOD(Create) {
     if (info.Length() == 3) {
         if (!info[0]->IsArray()) {
             Nan::ThrowError("newFiles Must be Array");
@@ -762,7 +751,7 @@ NAN_METHOD(Extract) {
     }
 }
 
-NAN_METHOD(ReadBuffer) {
+NAN_METHOD(Read) {
     if (info.Length() == 3) {
         if (!info[0]->IsString()) {
             Nan::ThrowError("internalPath Must be string");
@@ -788,14 +777,14 @@ NAN_METHOD(ReadBuffer) {
 #pragma region //Node
 
 NAN_MODULE_INIT(init) {
-    Nan::Set(target, New<String>("ListContent").ToLocalChecked(),
-             GetFunction(New<FunctionTemplate>(ListContent)).ToLocalChecked());
+    Nan::Set(target, New<String>("Content").ToLocalChecked(),
+             GetFunction(New<FunctionTemplate>(Content)).ToLocalChecked());
 
     Nan::Set(target, New<String>("GetInfo").ToLocalChecked(),
              GetFunction(New<FunctionTemplate>(GetInfo)).ToLocalChecked());
 
-    Nan::Set(target, New<String>("WriteFromDisk").ToLocalChecked(),
-             GetFunction(New<FunctionTemplate>(WriteFromDisk)).ToLocalChecked());
+    Nan::Set(target, New<String>("Create").ToLocalChecked(),
+             GetFunction(New<FunctionTemplate>(Create)).ToLocalChecked());
 
     Nan::Set(target, New<String>("Append").ToLocalChecked(),
              GetFunction(New<FunctionTemplate>(Append)).ToLocalChecked());
@@ -803,8 +792,8 @@ NAN_MODULE_INIT(init) {
     Nan::Set(target, New<String>("Extract").ToLocalChecked(),
              GetFunction(New<FunctionTemplate>(Extract)).ToLocalChecked());
 
-    Nan::Set(target, New<String>("ReadBuffer").ToLocalChecked(),
-             GetFunction(New<FunctionTemplate>(ReadBuffer)).ToLocalChecked());
+    Nan::Set(target, New<String>("Read").ToLocalChecked(),
+             GetFunction(New<FunctionTemplate>(Read)).ToLocalChecked());
 }
 
 NODE_MODULE(manager, init);
