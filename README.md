@@ -38,16 +38,15 @@ ArchiveManager.Content('path/to/archive',function(error,files){
 });
 ```
 ### API
-There are six functions in this module:
+There are five functions in this module:
 ```js
 Content()
-GetInfo()
 Create()
 Append()
 Extract()
 Read()
 ```
-For more detail view the [wiki](https://github.com/LordDeimos/Node-Archive-Manager/wiki/API).s
+For more detail view the [wiki](https://github.com/LordDeimos/Node-Archive-Manager/wiki/API)
 
 ## Building From Source
 This uses node-gyp to build

@@ -27,7 +27,7 @@ typedef struct archive_entry* archive_entry_t;
 #pragma region //Helpers
 
 struct metadata_t {
-    const char* name;
+    std::string name;
     int size;
     bool isDir;
 };
@@ -140,7 +140,7 @@ std::vector<char> cat(std::vector<char> left, char* right, int rightSize) {
 
 #pragma region //Un-Wrapped
 
-std::vector<std::string> view(std::string file) {
+std::vector<metadata_t> view(std::string file) {
     archive_t archive;
     archive_entry_t entry;
     int r;
@@ -149,16 +149,20 @@ std::vector<std::string> view(std::string file) {
     archive_read_support_filter_all(archive);
     archive_read_support_format_all(archive);
 
-    std::vector<std::string> array;
+    std::vector<metadata_t> array;
 
     r = archive_read_open_filename(archive, file.c_str(), 10240);
     if (r != ARCHIVE_OK) {
         throw std::runtime_error(archive_error_string(archive));
-        return std::vector<std::string>();
+        return std::vector<metadata_t>();
     }
     int i = 0;
     while (archive_read_next_header(archive, &entry) != ARCHIVE_EOF) {
-        array.push_back(std::string(archive_entry_pathname(entry)));
+        metadata_t* object = new metadata_t;
+        object->name = std::string(archive_entry_pathname(entry));
+        object->size = archive_entry_size(entry);
+        object->isDir = (archive_entry_filetype(entry) == AE_IFDIR);
+        array.push_back(*object);
         archive_read_data_skip(archive);
         i++;
     }
@@ -166,44 +170,9 @@ std::vector<std::string> view(std::string file) {
 
     if (r != ARCHIVE_OK) {
         throw std::runtime_error(archive_error_string(archive));
-        return std::vector<std::string>();
+        return std::vector<metadata_t>();
     }
     return array;
-}
-
-metadata_t* getinfo(std::string fileName, std::string archivePath) {
-    archive_t archive;
-    archive_entry_t entry;
-    int r;
-    metadata_t* object = (metadata_t*)malloc(sizeof(metadata_t));
-
-    archive = archive_read_new();
-    archive_read_support_filter_all(archive);
-    archive_read_support_format_all(archive);
-
-    r = archive_read_open_filename(archive, archivePath.c_str(), BLOCK_SIZE);
-    if (r != ARCHIVE_OK) {
-        throw std::runtime_error(archive_error_string(archive));
-        return NULL;
-    }
-
-    while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
-        if (!strcmp(archive_entry_pathname(entry), fileName.c_str())) {
-            object->name = archive_entry_pathname(entry);
-            object->size = archive_entry_size(entry);
-            object->isDir = (archive_entry_filetype(entry) == AE_IFDIR);
-            //more?
-            break;
-        }
-    }
-
-    r = archive_read_free(archive);
-
-    if (r != ARCHIVE_OK) {
-        throw std::runtime_error(archive_error_string(archive));
-        return NULL;
-    }
-    return object;
 }
 
 bool writeLocal(std::vector<std::string> files, std::string archivePath) {
@@ -324,17 +293,16 @@ bool extract(std::string archivePath, std::string outputPath) {
 
 bool appendLocal(std::vector<std::string> newFiles, std::string archivePath) {
     std::string tempDir("./tmp/");
-    std::vector<std::string> content = view(archivePath.c_str());
+    std::vector<metadata_t> content = view(archivePath.c_str());
 
     for (int i = 0; i < content.size(); i++) {
-        newFiles.push_back(tempDir + content[i]);
+        newFiles.push_back(tempDir + content[i].name);
     }
 
     if (extract(archivePath, tempDir)) {
         if (writeLocal(newFiles, archivePath)) {
 #if defined _WIN32
 			removeDirWin(tempDir.c_str());
-			//system((std::string("del ")+tempDir).c_str());
 #else
 			system((std::string("rm -rf ")+tempDir).c_str());
 #endif
@@ -394,13 +362,12 @@ std::vector<char> getData(std::string internalPath, std::string archivePath) {
 class ViewWorker : public Nan::AsyncWorker {
   private:
     std::string path;
-    std::vector<std::string> files;
+    std::vector<metadata_t> files;
 
   public:
     ViewWorker(Nan::Callback* callback, std::string path)
         : AsyncWorker(callback) {
         this->path = path;
-        this->files = std::vector<std::string>();
     }
 
     void Execute() {
@@ -415,7 +382,11 @@ class ViewWorker : public Nan::AsyncWorker {
         Nan::HandleScope scope;
         Local<Array> output = Nan::New<Array>(files.size());
         for (int i = 0; i < files.size(); i++) {
-            Nan::Set(output, i, Nan::New<String>(files[i].c_str()).ToLocalChecked());
+            Local<Object> file = Nan::New<Object>();
+            Nan::Set(file, Nan::New<String>("name").ToLocalChecked(),Nan::New<String>(files[i].name).ToLocalChecked());
+            Nan::Set(file, Nan::New<String>("size").ToLocalChecked(),Nan::New<Number>(files[i].size));
+            Nan::Set(file, Nan::New<String>("directory").ToLocalChecked(),Nan::New<Boolean>(files[i].isDir));
+            Nan::Set(output, i, file);
         }
         Local<Value> argv[] = {Nan::Null(), output};
         callback->Call(2, argv);
@@ -423,47 +394,6 @@ class ViewWorker : public Nan::AsyncWorker {
     void HandleErrorCallback() {
         Nan::HandleScope scope;
         Local<Value> argv[] = {Nan::New<String>(this->ErrorMessage()).ToLocalChecked(), Nan::Null()};
-        callback->Call(2, argv);
-    }
-};
-
-class InfoWorker : public Nan::AsyncWorker {
-  private:
-    std::string archivePath, internalPath;
-    metadata_t* data;
-
-  public:
-    InfoWorker(Callback* callback, std::string internalPath, std::string archivePath)
-        : AsyncWorker(callback) {
-        this->archivePath = archivePath;
-        this->internalPath = internalPath;
-    }
-
-    void Execute() {
-        try {
-            data = getinfo(internalPath, archivePath);
-        } catch (std::exception& e) {
-            this->SetErrorMessage(e.what());
-        }
-    }
-
-    void HandleOKCallback() {
-        Nan::HandleScope scope;
-        Local<Object> output = Nan::New<Object>();
-        Nan::Set(output, New<String>("name").ToLocalChecked(), New<String>(data->name).ToLocalChecked());
-        Nan::Set(output, New<String>("size").ToLocalChecked(), New<Number>(data->size));
-        Nan::Set(output, New<String>("directory").ToLocalChecked(), New<Boolean>(data->isDir));
-        Local<Value> argv[] = {
-            Nan::Null(),
-            output};
-        callback->Call(2, argv);
-    }
-
-    void HandleErrorCallback() {
-        Nan::HandleScope scope;
-        Local<Value> argv[] = {
-            Nan::New<String>(this->ErrorMessage()).ToLocalChecked(),
-            Nan::Null()};
         callback->Call(2, argv);
     }
 };
@@ -645,29 +575,6 @@ NAN_METHOD(Content) {
     Nan::AsyncQueueWorker(new ViewWorker(callback, path));
 }
 
-NAN_METHOD(GetInfo) {
-    if (info.Length() != 3) {
-        Nan::ThrowError("Usage: GetInfo(fileName, archivePath, callback)");
-        return;
-    }
-    if (!info[0]->IsString()) {
-        Nan::ThrowError("fileName Must be a string.");
-        return;
-    }
-    if (!info[1]->IsString()) {
-        Nan::ThrowError("archivePath Must be a string.");
-        return;
-    }
-    if (!info[2]->IsFunction()) {
-        Nan::ThrowError("callback Must be a function.");
-        return;
-    }
-    String::Utf8Value utf8internal(info[0]->ToString()), utf8archive(info[1]->ToString());
-    std::string internalPath(*utf8internal), archivePath(*utf8archive);
-    Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
-    Nan::AsyncQueueWorker(new InfoWorker(callback, internalPath, archivePath));
-}
-
 NAN_METHOD(Create) {
     if (info.Length() == 3) {
         if (!info[0]->IsArray()) {
@@ -779,9 +686,6 @@ NAN_METHOD(Read) {
 NAN_MODULE_INIT(init) {
     Nan::Set(target, New<String>("Content").ToLocalChecked(),
              GetFunction(New<FunctionTemplate>(Content)).ToLocalChecked());
-
-    Nan::Set(target, New<String>("GetInfo").ToLocalChecked(),
-             GetFunction(New<FunctionTemplate>(GetInfo)).ToLocalChecked());
 
     Nan::Set(target, New<String>("Create").ToLocalChecked(),
              GetFunction(New<FunctionTemplate>(Create)).ToLocalChecked());

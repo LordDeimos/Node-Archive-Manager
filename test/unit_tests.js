@@ -2,16 +2,28 @@ const ArchiveManager = require('../build/Release/manager');
 const fs = require('fs');
 const os = require('os');
 
+function sortData(a,b){
+    var nameA = a.name.toLowerCase();
+    var nameB = b.name.toLowerCase();
+    if (nameA < nameB) {
+        return -1;
+    } else if (nameB < nameA) {
+        return 1;
+    }
+    return 0;
+}
+
 //Zip
 exports.testReadZip = function (test) {
-    test.expect(1);
+    test.expect(30);
     ArchiveManager.Content('./test/test-zip.zip', function (err, files) {
         if (err) {
             console.error(err);
             test.done();
             return;
         }
-        test.deepEqual(files.sort(), [
+        
+        var standard = [
             "entry_1.txt",
             "entry_2.txt",
             "entry_3.txt",
@@ -22,34 +34,20 @@ exports.testReadZip = function (test) {
             "entry_8.txt",
             "entry_9.txt",
             "entry_10.txt"
-        ].sort(), "Content for zip");
-        test.done();
-    });
-};
-
-exports.testInfoZip = function (test) {
-    if (process.platform !== 'linux') {
-        test.expect(3);
-    } else {
-        test.expect(2);
-    }
-    ArchiveManager.GetInfo('entry_1.txt', './test/test-zip.zip', function (err, info) {
-        if (err) {
-            console.error(err);
-            test.done();
-            return;
-        }
-        if (process.platform !== 'linux') {
-            test.equal(info.name, "entry_1.txt", "GetInfo name for zip");
-        }
-        test.equal(info.size, 5315, "GetInfo size for zip");
-        test.ok(!info.directory, "GetInfo type for zip");
+        ].sort();
+        var i=0;
+        files.sort(sortData).forEach(function(entry){
+            test.equal(entry.name, standard[i], "GetInfo name for zip");
+            test.equal(entry.size, 5315, "GetInfo size for zip");
+            test.ok(!entry.directory, "GetInfo type for zip");
+            ++i;
+        });
         test.done();
     });
 };
 
 exports.testWriteZipSingle = function (test) {
-    test.expect(3);
+    test.expect(4);
     ArchiveManager.Create(['test/entry_1.txt'], './test/test-write.zip', function (err, outcome) {
         if (err) {
             console.log(err);
@@ -63,24 +61,23 @@ exports.testWriteZipSingle = function (test) {
                 test.done();
                 return;
             }
-            test.deepEqual(files, [
+            var standard = [
                 "entry_1.txt"
-            ], "Content After Write");
-            ArchiveManager.GetInfo('entry_1.txt','./test/test-write.zip',function(err,info){
-                if(err){
-                    console.log(err);
-                    test.done();
-                    return;
-                }
-                test.equal(info.size,5315,"GetInfo size after Write");
-                test.done();
+            ].sort();
+            var i=0;
+            files.sort(sortData).forEach(function(entry){
+                test.equal(entry.name, standard[i], "GetInfo name after write");
+                test.equal(entry.size, 5315, "GetInfo size after write");
+                test.ok(!entry.directory, "GetInfo type after write");
+                ++i;
             });
+            test.done();
         });
     });
 };
 
 exports.testWriteZipMulti = function (test) {
-    test.expect(3);
+    test.expect(10);
     ArchiveManager.Create(['test/entry_1.txt', 'test/entry_2.txt', 'test/entry_3.txt'], './test/test-write.zip', function (err, outcome) {
         if (err) {
             console.error(err);
@@ -94,20 +91,19 @@ exports.testWriteZipMulti = function (test) {
                 test.done();
                 return;
             }
-            test.deepEqual(files, [
+            var standard = [
                 "entry_1.txt",
                 "entry_2.txt",
                 "entry_3.txt"
-            ], "Content After Write");
-            ArchiveManager.GetInfo('entry_1.txt','./test/test-write.zip',function(err,info){
-                if(err){
-                    console.log(err);
-                    test.done();
-                    return;
-                }
-                test.equal(info.size,5315,"GetInfo size after Write");
-                test.done();
+            ].sort();
+            var i=0;
+            files.sort(sortData).forEach(function(entry){
+                test.equal(entry.name, standard[i], "GetInfo name for zip");
+                test.equal(entry.size, 5315, "GetInfo size for zip");
+                test.ok(!entry.directory, "GetInfo type for zip");
+                ++i;
             });
+            test.done();
         });
     });
 };
@@ -138,9 +134,8 @@ exports.testExtract = function (test) {
     });
 };
 
-/* Fails on travis for some reason, but works locally*/
 exports.testAppendZip = function(test) {
-    test.expect(3);
+    test.expect(13);
     ArchiveManager.Append(['test/entry_4.txt'],'./test/test-write.zip', function(err,outcome){
         if(err){
             console.log(err);
@@ -154,13 +149,19 @@ exports.testAppendZip = function(test) {
                 test.done();
                 return;
             }
-            test.deepEqual(files.sort(),[
+            var standard = [
                 "entry_1.txt",
                 "entry_2.txt",
                 "entry_3.txt",
                 "entry_4.txt"
-                ].sort(), "Content After Write");
-            test.ok(!fs.existsSync("./tmp"),"Test removal of tmp");
+            ].sort();
+            var i=0;
+            files.sort(sortData).forEach(function(entry){
+                test.equal(entry.name, standard[i], "GetInfo name for zip");
+                test.equal(entry.size, 5315, "GetInfo size for zip");
+                test.ok(!entry.directory, "GetInfo type for zip");
+                ++i;
+            });
             test.done();
         });
     });
@@ -194,14 +195,14 @@ exports.testReadMemoryNotThere = function (test) {
 
 //7z
 exports.testRead7z = function (test) {
-    test.expect(1);
+    test.expect(30);
     ArchiveManager.Content('./test/test-7z.7z', function (err, files) {
         if (err) {
             console.log(err);
             test.done();
             return;
         }
-        test.deepEqual(files, [
+        var standard = [
             "entry_1.txt",
             "entry_2.txt",
             "entry_3.txt",
@@ -212,42 +213,28 @@ exports.testRead7z = function (test) {
             "entry_8.txt",
             "entry_9.txt",
             "entry_10.txt"
-        ], "Content for 7zip");
-        test.done();
-    });
-};
-
-exports.testInfo7z = function (test) {
-    if (process.platform !== 'linux') {
-        test.expect(3);
-    } else {
-        test.expect(2);
-    }
-    ArchiveManager.GetInfo('entry_1.txt', './test/test-7z.7z', function (err, info) {
-        if (err) {
-            console.error(err);
-            test.done();
-            return;
-        }
-        if (process.platform !== 'linux') {
-            test.equal(info.name, "entry_1.txt", "GetInfo name for 7z");
-        }
-        test.equal(info.size, 5315, "GetInfo size for 7z");
-        test.ok(!info.directory, "GetInfo type for 7z");
+        ].sort();
+        var i=0;
+        files.sort(sortData).forEach(function(entry){
+            test.equal(entry.name, standard[i], "GetInfo name for zip");
+            test.equal(entry.size, 5315, "GetInfo size for zip");
+            test.ok(!entry.directory, "GetInfo type for zip");
+            ++i;
+        });
         test.done();
     });
 };
 
 //tar
 exports.testReadTar = function (test) {
-    test.expect(1);
+    test.expect(30);
     ArchiveManager.Content('./test/test-tar.tar', function (err, files) {
         if (err) {
             console.log(err);
             test.done();
             return;
         }
-        test.deepEqual(files, [
+        var standard = [
             "entry_1.txt",
             "entry_2.txt",
             "entry_3.txt",
@@ -258,42 +245,28 @@ exports.testReadTar = function (test) {
             "entry_8.txt",
             "entry_9.txt",
             "entry_10.txt"
-        ].sort(), "Content for tar");
-        test.done();
-    });
-};
-
-exports.testInfotar = function (test) {
-    if (process.platform !== 'linux') {
-        test.expect(3);
-    } else {
-        test.expect(2);
-    }
-    ArchiveManager.GetInfo('entry_1.txt', './test/test-tar.tar', function (err, info) {
-        if (err) {
-            console.error(err);
-            test.done();
-            return;
-        }
-        if (process.platform !== 'linux') {
-            test.equal(info.name, "entry_1.txt", "GetInfo name for tar");
-        }
-        test.equal(info.size, 5315, "GetInfo size for tar");
-        test.ok(!info.directory, "GetInfo type for tar");
+        ].sort();
+        var i=0;
+        files.sort(sortData).forEach(function(entry){
+            test.equal(entry.name, standard[i], "GetInfo name for zip");
+            test.equal(entry.size, 5315, "GetInfo size for zip");
+            test.ok(!entry.directory, "GetInfo type for zip");
+            ++i;
+        });
         test.done();
     });
 };
 
 //Bzip
 exports.testReadbz2 = function (test) {
-    test.expect(1);
+    test.expect(30);
     ArchiveManager.Content('./test/test-bz2.tar.bz2', function (err, files) {
         if (err) {
             console.log(err);
             test.done();
             return;
         }
-        test.deepEqual(files.sort(), [
+        var standard = [
             "entry_1.txt",
             "entry_2.txt",
             "entry_3.txt",
@@ -304,42 +277,28 @@ exports.testReadbz2 = function (test) {
             "entry_8.txt",
             "entry_9.txt",
             "entry_10.txt"
-        ].sort(), "Content for bz2");
-        test.done();
-    });
-};
-
-exports.testInfobz2 = function (test) {
-    if (process.platform !== 'linux') {
-        test.expect(3);
-    } else {
-        test.expect(2);
-    }
-    ArchiveManager.GetInfo('entry_1.txt', './test/test-bz2.tar.bz2', function (err, info) {
-        if (err) {
-            console.error(err);
-            test.done();
-            return;
-        }
-        if (process.platform !== 'linux') {
-            test.equal(info.name, "entry_1.txt", "GetInfo name for bz2");
-        }
-        test.equal(info.size, 5315, "GetInfo size for bz2");
-        test.ok(!info.directory, "GetInfo type for bz2");
+        ].sort();
+        var i=0;
+        files.sort(sortData).forEach(function(entry){
+            test.equal(entry.name, standard[i], "GetInfo name for zip");
+            test.equal(entry.size, 5315, "GetInfo size for zip");
+            test.ok(!entry.directory, "GetInfo type for zip");
+            ++i;
+        });
         test.done();
     });
 };
 
 //Gzip
 exports.testReadgz = function (test) {
-    test.expect(1);
+    test.expect(30);
     ArchiveManager.Content('./test/test-gz.tar.gz', function (err, files) {
         if (err) {
             console.log(err);
             test.done();
             return;
         }
-        test.deepEqual(files.sort(), [
+        var standard = [
             "entry_1.txt",
             "entry_2.txt",
             "entry_3.txt",
@@ -350,42 +309,28 @@ exports.testReadgz = function (test) {
             "entry_8.txt",
             "entry_9.txt",
             "entry_10.txt"
-        ].sort(), "Content for gz");
-        test.done();
-    });
-};
-
-exports.testInfogz = function (test) {
-    if (process.platform !== 'linux') {
-        test.expect(3);
-    } else {
-        test.expect(2);
-    }
-    ArchiveManager.GetInfo('entry_1.txt', './test/test-gz.tar.gz', function (err, info) {
-        if (err) {
-            console.error(err);
-            test.done();
-            return;
-        }
-        if (process.platform !== 'linux') {
-            test.equal(info.name, "entry_1.txt", "GetInfo name for gz");
-        }
-        test.equal(info.size, 5315, "GetInfo size for gz");
-        test.ok(!info.directory, "GetInfo type for gz");
+        ].sort();
+        var i=0;
+        files.sort(sortData).forEach(function(entry){
+            test.equal(entry.name, standard[i], "GetInfo name for zip");
+            test.equal(entry.size, 5315, "GetInfo size for zip");
+            test.ok(!entry.directory, "GetInfo type for zip");
+            ++i;
+        });
         test.done();
     });
 };
 
 //Xz
 exports.testReadxz = function (test) {
-    test.expect(1);
+    test.expect(30);
     ArchiveManager.Content('./test/test-xz.tar.xz', function (err, files) {
         if (err) {
             console.log(err);
             test.done();
             return;
         }
-        test.deepEqual(files, [
+        var standard = [
             "entry_1.txt",
             "entry_2.txt",
             "entry_3.txt",
@@ -396,28 +341,14 @@ exports.testReadxz = function (test) {
             "entry_8.txt",
             "entry_9.txt",
             "entry_10.txt"
-        ].sort(), "Content for xz");
-        test.done();
-    });
-};
-
-exports.testInfoxz = function (test) {
-    if (process.platform !== 'linux') {
-        test.expect(3);
-    } else {
-        test.expect(2);
-    }
-    ArchiveManager.GetInfo('entry_1.txt', './test/test-xz.tar.xz', function (err, info) {
-        if (err) {
-            console.error(err);
-            test.done();
-            return;
-        }
-        if (process.platform !== 'linux') {
-            test.equal(info.name, "entry_1.txt", "GetInfo name for xz");
-        }
-        test.equal(info.size, 5315, "GetInfo size for xz");
-        test.ok(!info.directory, "GetInfo type for xz");
+        ].sort();
+        var i=0;
+        files.sort(sortData).forEach(function(entry){
+            test.equal(entry.name, standard[i], "GetInfo name for zip");
+            test.equal(entry.size, 5315, "GetInfo size for zip");
+            test.ok(!entry.directory, "GetInfo type for zip");
+            ++i;
+        });
         test.done();
     });
 };
