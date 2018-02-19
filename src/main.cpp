@@ -3,7 +3,13 @@
 #include <nan.h>
 #include <sstream>
 #include <stdexcept>
+#include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+
+#if defined _WIN32
+#include <windows.h>
+#endif
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -91,6 +97,33 @@ void set_filter(archive_t archive, const char* file) {
         }
     }
 }
+
+#if defined _WIN32
+void removeDirWin(const char* dir) {
+    WIN32_FIND_DATAA fileData;
+    HANDLE handle = INVALID_HANDLE_VALUE;
+	char path[BLOCK_SIZE];
+	strcat(path,dir);
+    strcat (path,"\\*.*");
+    if ((handle = FindFirstFileA(path, &fileData)) == INVALID_HANDLE_VALUE) {
+        throw std::runtime_error(std::string("Cannot open directory: ")+std::string(path));
+        return;
+    }
+
+    do {
+		if (strcmp(fileData.cFileName, ".") != 0 && strcmp(fileData.cFileName, "..") != 0){
+			if(fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY){
+				removeDirWin(fileData.cFileName);
+			}
+			else{
+				remove((std::string(dir)+std::string(fileData.cFileName)).c_str());
+			}
+		}
+    }while (FindNextFileA(handle, &fileData));
+	FindClose(handle);
+	RemoveDirectoryA(dir);
+}
+#endif
 
 std::vector<char> cat(std::vector<char> left, char* right, int rightSize) {
     std::vector<char> output;
@@ -190,38 +223,37 @@ bool writeLocal(std::vector<std::string> files, std::string archivePath) {
         throw std::runtime_error(archive_error_string(archive));
         return false;
     }
-	std::ifstream is;
+    std::ifstream is;
     for (int i = 0; i < files.size(); i++) {
         std::vector<std::string> path = split(files[i].c_str(), '/');
 
         const char* internalName = path.back().c_str();
         stat(files[i].c_str(), &st);
-		entry = archive_entry_new(); // Note 2
-		archive_entry_set_pathname(entry, internalName);
-		archive_entry_set_size(entry, st.st_size); // Note 3
-		archive_entry_set_filetype(entry, AE_IFREG);
-		archive_entry_set_perm(entry, 0644);
-		archive_write_header(archive, entry);
+        entry = archive_entry_new(); // Note 2
+        archive_entry_set_pathname(entry, internalName);
+        archive_entry_set_size(entry, st.st_size); // Note 3
+        archive_entry_set_filetype(entry, AE_IFREG);
+        archive_entry_set_perm(entry, 0644);
+        archive_write_header(archive, entry);
 
-		is.open(files[i].c_str(), std::ifstream::binary);
-		if(is.is_open()){
-			is.seekg(0,is.end);
-			len = is.tellg();
-			is.seekg(0,is.beg);
-			
-			buff = new char[len];
-			is.read(buff,len);
-			archive_write_data(archive, buff, len);
+        is.open(files[i].c_str(), std::ifstream::binary);
+        if (is.is_open()) {
+            is.seekg(0, is.end);
+            len = is.tellg();
+            is.seekg(0, is.beg);
 
-			is.close();
-			archive_entry_free(entry);
-		}
-		else{
-			is.close();		
-			archive_entry_free(entry);
-			throw std::runtime_error("Falied to open: "+files[i]);	
-			return false;
-		}
+            buff = new char[len];
+            is.read(buff, len);
+            archive_write_data(archive, buff, len);
+
+            is.close();
+            archive_entry_free(entry);
+        } else {
+            is.close();
+            archive_entry_free(entry);
+            throw std::runtime_error("Falied to open: " + files[i]);
+            return false;
+        }
     }
     if (archive_write_close(archive) != ARCHIVE_OK) {
         throw std::runtime_error(archive_error_string(archive));
@@ -295,14 +327,19 @@ bool appendLocal(std::vector<std::string> newFiles, std::string archivePath) {
     std::vector<std::string> content = view(archivePath.c_str());
 
     for (int i = 0; i < content.size(); i++) {
-		newFiles.push_back(tempDir + content[i]);
+        newFiles.push_back(tempDir + content[i]);
     }
 
     if (extract(archivePath, tempDir)) {
-        if(writeLocal(newFiles, archivePath)){
-			std::remove("./tmp/");
-			return true;
-		}
+        if (writeLocal(newFiles, archivePath)) {
+#if defined _WIN32
+			removeDirWin(tempDir.c_str());
+			//system((std::string("del ")+tempDir).c_str());
+#else
+			system((std::string("rm -rf ")+tempDir).c_str());
+#endif
+            return true;
+        }
     }
 
     return false;
@@ -560,43 +597,40 @@ class ReadWorker : public Nan::AsyncWorker {
 };
 
 class AppendWorker : public Nan::AsyncWorker {
-	private:
-	std::vector<std::string> newFiles;
-	std::string archivePath;
-	bool outcome;
+  private:
+    std::vector<std::string> newFiles;
+    std::string archivePath;
+    bool outcome;
 
-	public:
-	AppendWorker(Callback* callback, std::vector<std::string> newFiles, std::string archivePath) : AsyncWorker(callback){
-		this->newFiles = newFiles;
-		this->archivePath = archivePath;
-	}
+  public:
+    AppendWorker(Callback* callback, std::vector<std::string> newFiles, std::string archivePath) : AsyncWorker(callback) {
+        this->newFiles = newFiles;
+        this->archivePath = archivePath;
+    }
 
-	void Execute(){
-		try{
-			outcome = appendLocal(newFiles,archivePath);
-		}
-		catch(std::exception& e){
-			this->SetErrorMessage(e.what());
-		}
-	}
+    void Execute() {
+        try {
+            outcome = appendLocal(newFiles, archivePath);
+        } catch (std::exception& e) {
+            this->SetErrorMessage(e.what());
+        }
+    }
 
-	void HandleOKCallback(){
+    void HandleOKCallback() {
         Nan::HandleScope scope;
         Local<Value> argv[] = {
             Nan::Null(),
-            Nan::New<Boolean>(outcome)
-		};
+            Nan::New<Boolean>(outcome)};
         callback->Call(2, argv);
-	}
+    }
 
-	void HandleErrorCallback(){
+    void HandleErrorCallback() {
         Nan::HandleScope scope;
         Local<Value> argv[] = {
             Nan::New<String>(this->ErrorMessage()).ToLocalChecked(),
-            Nan::Null()
-		};
+            Nan::Null()};
         callback->Call(2, argv);
-	}
+    }
 };
 
 #pragma endregion
@@ -681,12 +715,12 @@ NAN_METHOD(Append) {
             Nan::ThrowError("callback Must be function");
             return;
         }
-		Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
-		std::vector<std::string> newFiles;
+        Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
+        std::vector<std::string> newFiles;
         for (int i = 0; i < Local<Array>::Cast(info[0])->Length(); i++) {
-			newFiles.push_back(std::string(*String::Utf8Value(Local<Array>::Cast(info[0])->Get(i))));
+            newFiles.push_back(std::string(*String::Utf8Value(Local<Array>::Cast(info[0])->Get(i))));
         }
-		Nan::AsyncQueueWorker(new AppendWorker(callback,newFiles,std::string(*String::Utf8Value(info[1]->ToString()))));
+        Nan::AsyncQueueWorker(new AppendWorker(callback, newFiles, std::string(*String::Utf8Value(info[1]->ToString()))));
     } else {
         Nan::ThrowError("Usage: Append([newFiles], archivePath, callback)");
     }

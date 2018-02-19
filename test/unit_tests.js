@@ -140,7 +140,7 @@ exports.testExtract = function (test) {
 
 /* Fails on travis for some reason, but works locally*/
 exports.testAppendZip = function(test) {
-    test.expect(2);
+    test.expect(3);
     ArchiveManager.Append(['test/entry_4.txt'],'./test/test-write.zip', function(err,outcome){
         if(err){
             console.log(err);
@@ -160,6 +160,7 @@ exports.testAppendZip = function(test) {
                 "entry_3.txt",
                 "entry_4.txt"
                 ].sort(), "ListContent After Write");
+            test.ok(!fs.existsSync("./tmp"),"Test removal of tmp");
             test.done();
         });
     });
