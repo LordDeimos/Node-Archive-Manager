@@ -1,0 +1,7 @@
+# Custom
+build/
+.vscode/
+*.log
+test/
+*.yml
+.clang-format
