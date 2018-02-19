@@ -47,9 +47,7 @@ Append()
 Extract()
 Read()
 ```
-For more detail view the [wiki](https://github.com/LordDeimos/Node-Archive-Manager/wiki/API).
-
-In-Place edits are currently not supported by libarchive, so this will be very slow for large archives
+For more detail view the [wiki](https://github.com/LordDeimos/Node-Archive-Manager/wiki/API).s
 
 ## Building From Source
 This uses node-gyp to build
