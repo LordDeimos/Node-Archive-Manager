@@ -11,29 +11,23 @@ As per usual, use your node package manager of choice to install this in your pr
 ```sh
 npm install archive-manager
 ```
-This will require node-gyp to be present, if you don't have it:
-```sh
-npm install -g node-gyp
-```
+*There are some quirks to installing node-gyp, there are very required for windows*
+
+You can get node-gyp [here](https://github.com/nodejs/node-gyp).
+
 ## Usage
 Here is a basic use case:
 
 ```js
 const ArchiveManager = require('archive-manager');
 
-ArchiveManager.Content('path/to/archive',function(error,files){
+ArchiveManager.Content('path/to/archive', function(error, files){
     if(error){
         console.error(error);
         return;
     }
     files.forEach(function(file){
-        ArchiveManager.GetInfo(file,'path/to/archive',function(error,info){
-            if(error){
-                console.error(error);
-                return;
-            }
-            console.log(info);
-        });
+        console.log(file.name);
     });
 });
 ```
@@ -49,10 +43,9 @@ Read()
 For more detail view the [wiki](https://github.com/LordDeimos/Node-Archive-Manager/wiki/API)
 
 ## Building From Source
-This uses node-gyp to build
 
 ### For Windows
-The libarchive package and its dependencies are provied for both 64 and 32 bit windows, so all you need to do is:
+The libarchive package and its dependencies are provied for both 64 and 32 bit windows, but you may need to grab some extra things for node-gyp (see above):
 ```powershell
 npm install
 node-gyp rebuild
