@@ -292,28 +292,6 @@ bool extract(std::string archivePath, std::string outputPath) {
     return true;
 }
 
-bool appendLocal(std::vector<std::string> newFiles, std::string archivePath) {
-    std::string tempDir("./tmp/");
-    std::vector<metadata_t> content = view(archivePath.c_str());
-
-    for (int i = 0; i < content.size(); i++) {
-        newFiles.push_back(tempDir + content[i].name);
-    }
-
-    if (extract(archivePath, tempDir)) {
-        if (writeLocal(newFiles, archivePath)) {
-#if defined _WIN32
-            removeDirWin(tempDir.c_str());
-#else
-            system((std::string("rm -rf ") + tempDir).c_str());
-#endif
-            return true;
-        }
-    }
-
-    return false;
-}
-
 std::vector<char> getData(std::string internalPath, std::string archivePath) {
     archive_t archive;
     archive_entry_t entry;
@@ -433,6 +411,65 @@ std::vector<const char*> extractBuffer(std::string archivePath) {
 bool appendBuffer(std::vector<std::string> fileNames, std::vector<const char*> fileData, std::vector<size_t> fileSizes, std::string archivePath) {
     std::vector<const char*> contentData = extractBuffer(archivePath);
     std::vector<metadata_t> contentMeta = view(archivePath);
+
+    rename(archivePath.c_str(),(archivePath+std::string(".tmp")).c_str());
+
+    for (int i = 0; i < contentMeta.size(); i++) {
+        fileData.push_back(contentData[i]);
+        fileNames.push_back(contentMeta[i].name);
+        fileSizes.push_back((size_t)contentMeta[i].size);
+    }
+    return writeBuffer(fileNames, fileData, fileSizes, archivePath);
+}
+
+std::vector<const char*> createFileBuffers(std::vector<std::string> fileNames){
+    char* buff;
+    int len;
+    std::vector<const char*> output;
+    std::ifstream is;
+    for (int i = 0; i < fileNames.size(); i++) {
+        std::vector<std::string> path = split(fileNames[i].c_str(), '/');
+
+        const char* internalName = path.back().c_str();
+
+        is.open(fileNames[i].c_str(), std::ifstream::binary);
+        if (is.is_open()) {
+            is.seekg(0, is.end);
+            len = is.tellg();
+            is.seekg(0, is.beg);
+
+            buff = new char[len];
+            is.read(buff, len);
+            output.push_back(buff);
+            is.close();
+        } else {
+            is.close();
+            throw std::runtime_error("Falied to open: " + fileNames[i]);
+            return std::vector<const char*>();
+        }
+    }
+    return output;
+}
+
+bool appendLocal(std::vector<std::string> newFiles, std::string archivePath) {
+    std::vector<const char*> fileData = createFileBuffers(newFiles);
+
+    struct stat st;
+    std::vector<size_t> fileSizes;
+    for(int i=0;i<fileData.size();i++){
+        stat(newFiles[i].c_str(),&st);
+        fileSizes.push_back(st.st_size);
+    }
+
+    std::vector<std::string> fileNames;
+    for(int i=0;i<newFiles.size();i++){
+        fileNames.push_back(split(newFiles[i].c_str(),'/').back());
+    }
+
+    std::vector<const char*> contentData = extractBuffer(archivePath);
+    std::vector<metadata_t> contentMeta = view(archivePath);
+
+    rename(archivePath.c_str(),(archivePath+std::string(".tmp")).c_str());
 
     for (int i = 0; i < contentMeta.size(); i++) {
         fileData.push_back(contentData[i]);
@@ -659,6 +696,7 @@ class AppendWorker : public Nan::AsyncWorker {
     void Execute() {
         try {
             outcome = appendLocal(newFiles, archivePath);
+            remove((archivePath+std::string(".tmp")).c_str());
         } catch (std::exception& e) {
             this->SetErrorMessage(e.what());
         }
@@ -701,6 +739,7 @@ class AppendBufferWorker : public Nan::AsyncWorker {
     void Execute() {
         try {
             outcome = appendBuffer(fileNames, fileData, fileSizes, archivePath);
+            remove((archivePath+std::string(".tmp")).c_str());
         } catch (std::exception& e) {
             this->SetErrorMessage(e.what());
         }
