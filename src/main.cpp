@@ -331,8 +331,7 @@ bool writeBuffer(std::vector<std::string> fileNames, std::vector<std::vector<cha
             throw std::runtime_error(archive_error_string(archive));
             return false;
         }
-        la_ssize_t response = archive_write_data(archive, (void*)(fileData[i].data()), fileSizes[i]);
-        if(response!=fileSizes[i]){
+        if(archive_write_data(archive, (void*)(fileData[i].data()), fileSizes[i])!=fileSizes[i]){
             throw std::runtime_error(archive_error_string(archive));
             return false;
         }
