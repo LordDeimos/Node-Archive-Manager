@@ -309,7 +309,7 @@ std::vector<char> getData(std::string internalPath, std::string archivePath) {
     return output;
 }
 
-bool writeBuffer(std::vector<std::string> fileNames, std::vector<std::vector<char> > fileData, std::vector<size_t> fileSizes, std::string archivePath) {
+bool writeBuffer(std::vector<std::string> fileNames, std::vector<std::vector<char>> fileData, std::vector<size_t> fileSizes, std::string archivePath) {
     archive_t archive;
     archive_entry_t entry;
 
@@ -347,11 +347,11 @@ bool writeBuffer(std::vector<std::string> fileNames, std::vector<std::vector<cha
     return true;
 }
 
-std::vector<std::vector<char> > extractBuffer(std::string archivePath) {
+std::vector<std::vector<char>> extractBuffer(std::string archivePath) {
     archive_t archive;
     archive_entry_t entry;
     int response;
-    std::vector<std::vector<char> > output;
+    std::vector<std::vector<char>> output;
     size_t totalsize = 0;
 
     archive = archive_read_new();
@@ -359,14 +359,14 @@ std::vector<std::vector<char> > extractBuffer(std::string archivePath) {
     archive_read_support_compression_all(archive);
     if ((response = archive_read_open_filename(archive, archivePath.c_str(), BLOCK_SIZE)) != ARCHIVE_OK) {
         throw std::runtime_error(archive_error_string(archive));
-        return std::vector<std::vector<char> >();
+        return std::vector<std::vector<char>>();
     }
 
     while ((response = archive_read_next_header(archive, &entry)) != ARCHIVE_EOF) {
         std::vector<char> current;
         if (response < ARCHIVE_WARN) {
             throw std::runtime_error(archive_error_string(archive));
-            return std::vector<std::vector<char> >();
+            return std::vector<std::vector<char>>();
         } else if (archive_entry_size(entry) > 0) {
             const void* buffer;
             size_t size;
@@ -374,7 +374,7 @@ std::vector<std::vector<char> > extractBuffer(std::string archivePath) {
             while ((response = archive_read_data_block(archive, &buffer, &size, &offset)) != ARCHIVE_EOF) {
                 if (response < ARCHIVE_OK) {
                     throw std::runtime_error(archive_error_string(archive));
-                    return std::vector<std::vector<char> >();
+                    return std::vector<std::vector<char>>();
                 }
                 totalsize += size;
                 if (size > 0) {
@@ -388,8 +388,8 @@ std::vector<std::vector<char> > extractBuffer(std::string archivePath) {
     return output;
 }
 
-bool appendBuffer(std::vector<std::string> fileNames, std::vector<std::vector<char> > fileData, std::vector<size_t> fileSizes, std::string archivePath) {
-    std::vector<std::vector<char> > contentData = extractBuffer(archivePath);
+bool appendBuffer(std::vector<std::string> fileNames, std::vector<std::vector<char>> fileData, std::vector<size_t> fileSizes, std::string archivePath) {
+    std::vector<std::vector<char>> contentData = extractBuffer(archivePath);
     std::vector<metadata_t> contentMeta = view(archivePath);
     rename(archivePath.c_str(), (archivePath + std::string(".tmp")).c_str());
 
@@ -403,10 +403,10 @@ bool appendBuffer(std::vector<std::string> fileNames, std::vector<std::vector<ch
     return writeBuffer(fileNames, fileData, fileSizes, archivePath);
 }
 
-std::vector<std::vector<char> > createFileBuffers(std::vector<std::string> fileNames) {
+std::vector<std::vector<char>> createFileBuffers(std::vector<std::string> fileNames) {
     char* buff;
     int len;
-    std::vector<std::vector<char> > output;
+    std::vector<std::vector<char>> output;
     std::ifstream is;
     for (int i = 0; i < fileNames.size(); i++) {
         std::vector<std::string> path = split(fileNames[i].c_str(), '/');
@@ -427,14 +427,14 @@ std::vector<std::vector<char> > createFileBuffers(std::vector<std::string> fileN
         } else {
             is.close();
             throw std::runtime_error("Falied to open: " + fileNames[i]);
-            return std::vector<std::vector<char> >();
+            return std::vector<std::vector<char>>();
         }
     }
     return output;
 }
 
 bool appendLocal(std::vector<std::string> newFiles, std::string archivePath) {
-    std::vector<std::vector<char> > fileData = createFileBuffers(newFiles);
+    std::vector<std::vector<char>> fileData = createFileBuffers(newFiles);
 
     struct stat st;
     std::vector<size_t> fileSizes;
@@ -448,7 +448,7 @@ bool appendLocal(std::vector<std::string> newFiles, std::string archivePath) {
         fileNames.push_back(split(newFiles[i].c_str(), '/').back());
     }
 
-    std::vector<std::vector<char> > contentData = extractBuffer(archivePath);
+    std::vector<std::vector<char>> contentData = extractBuffer(archivePath);
     std::vector<metadata_t> contentMeta = view(archivePath);
 
     rename(archivePath.c_str(), (archivePath + std::string(".tmp")).c_str());
@@ -462,10 +462,10 @@ bool appendLocal(std::vector<std::string> newFiles, std::string archivePath) {
 }
 
 bool removeFiles(std::vector<std::string> internalPaths, std::string archivePath) {
-    std::vector<std::vector<char> > contentData = extractBuffer(archivePath);
+    std::vector<std::vector<char>> contentData = extractBuffer(archivePath);
     std::vector<metadata_t> contentMeta = view(archivePath);
     std::vector<std::string> fileNames;
-    std::vector<std::vector<char> > fileData;
+    std::vector<std::vector<char>> fileData;
     std::vector<size_t> fileSizes;
 
     for (int i = 0; i < contentMeta.size(); i++) {
@@ -562,13 +562,13 @@ class WriteWorker : public Nan::AsyncWorker {
 class WriteBufferWorker : public Nan::AsyncWorker {
   private:
     std::vector<std::string> fileNames;
-    std::vector<std::vector<char> > fileData;
+    std::vector<std::vector<char>> fileData;
     std::vector<size_t> fileSizes;
     std::string archivePath;
     bool outcome;
 
   public:
-    WriteBufferWorker(Callback* callback, std::vector<std::string> fileNames, std::vector<std::vector<char> > fileData, std::vector<size_t> fileSizes, std::string archivePath)
+    WriteBufferWorker(Callback* callback, std::vector<std::string> fileNames, std::vector<std::vector<char>> fileData, std::vector<size_t> fileSizes, std::string archivePath)
         : AsyncWorker(callback) {
         this->fileNames = fileNames;
         this->fileData = fileData;
@@ -721,13 +721,13 @@ class AppendWorker : public Nan::AsyncWorker {
 class AppendBufferWorker : public Nan::AsyncWorker {
   private:
     std::vector<std::string> fileNames;
-    std::vector<std::vector<char> > fileData;
+    std::vector<std::vector<char>> fileData;
     std::vector<size_t> fileSizes;
     std::string archivePath;
     bool outcome;
 
   public:
-    AppendBufferWorker(Callback* callback, std::vector<std::string> fileNames, std::vector<std::vector<char> > fileData, std::vector<size_t> fileSizes, std::string archivePath)
+    AppendBufferWorker(Callback* callback, std::vector<std::string> fileNames, std::vector<std::vector<char>> fileData, std::vector<size_t> fileSizes, std::string archivePath)
         : AsyncWorker(callback) {
         this->fileNames = fileNames;
         this->fileData = fileData;
@@ -865,7 +865,7 @@ NAN_METHOD(Create) {
             return;
         }
         std::vector<std::string> files;
-        std::vector<std::vector<char> > buffers;
+        std::vector<std::vector<char>> buffers;
         std::vector<size_t> sizes;
         for (int i = 0; i < Local<Array>::Cast(info[0])->Length(); i++) {
             files.push_back(std::string(*String::Utf8Value(Local<Array>::Cast(info[0])->Get(i))));
@@ -922,7 +922,7 @@ NAN_METHOD(Append) {
             return;
         }
         std::vector<std::string> files;
-        std::vector<std::vector<char> > buffers;
+        std::vector<std::vector<char>> buffers;
         std::vector<size_t> sizes;
         for (int i = 0; i < Local<Array>::Cast(info[0])->Length(); i++) {
             files.push_back(std::string(*String::Utf8Value(Local<Array>::Cast(info[0])->Get(i))));
