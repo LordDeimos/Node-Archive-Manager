@@ -203,7 +203,11 @@ exports.testRemove = function(test){
                 test.done();
                 return;
             }
-            test.ok(!files.includes('entry_1.txt'));
+            var fileNames = [];
+            files.forEach(function(file){
+                fileNames.push(file.name);
+            });
+            test.ok(!(fileNames.indexOf('entry_1.txt') !== -1));
             test.done();
         });
     });
