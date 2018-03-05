@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <nan.h>
@@ -308,7 +309,7 @@ std::vector<char> getData(std::string internalPath, std::string archivePath) {
     return output;
 }
 
-bool writeBuffer(std::vector<std::string> fileNames, std::vector<std::vector<char> > fileData, std::vector<size_t> fileSizes, std::string archivePath) {
+bool writeBuffer(std::vector<std::string> fileNames, std::vector<std::vector<char>> fileData, std::vector<size_t> fileSizes, std::string archivePath) {
     archive_t archive;
     archive_entry_t entry;
 
@@ -316,7 +317,7 @@ bool writeBuffer(std::vector<std::string> fileNames, std::vector<std::vector<cha
 
     //archive_write_set_format_filter_by_ext(archive,archivePath.c_str());// only for libarchive >=3.2
     set_filter(archive, archivePath.c_str());
-    
+
     if (archive_write_open_filename(archive, archivePath.c_str()) != ARCHIVE_OK) {
         throw std::runtime_error(archive_error_string(archive));
         return false;
@@ -327,11 +328,11 @@ bool writeBuffer(std::vector<std::string> fileNames, std::vector<std::vector<cha
         archive_entry_set_size(entry, fileSizes[i]);
         archive_entry_set_filetype(entry, AE_IFREG);
         archive_entry_set_perm(entry, 0644);
-        if(archive_write_header(archive, entry)!= ARCHIVE_OK){
+        if (archive_write_header(archive, entry) != ARCHIVE_OK) {
             throw std::runtime_error(archive_error_string(archive));
             return false;
         }
-        if(archive_write_data(archive, (void*)(fileData[i].data()), fileSizes[i])!=fileSizes[i]){
+        if (archive_write_data(archive, (void*)(fileData[i].data()), fileSizes[i]) != fileSizes[i]) {
             throw std::runtime_error(archive_error_string(archive));
             return false;
         }
@@ -346,26 +347,26 @@ bool writeBuffer(std::vector<std::string> fileNames, std::vector<std::vector<cha
     return true;
 }
 
-std::vector<std::vector<char> > extractBuffer(std::string archivePath) {
+std::vector<std::vector<char>> extractBuffer(std::string archivePath) {
     archive_t archive;
     archive_entry_t entry;
     int response;
-    std::vector<std::vector<char> > output;
+    std::vector<std::vector<char>> output;
     size_t totalsize = 0;
 
     archive = archive_read_new();
     archive_read_support_format_all(archive);
     archive_read_support_compression_all(archive);
-    if ((response = archive_read_open_filename(archive, archivePath.c_str(), BLOCK_SIZE))!=ARCHIVE_OK) {
+    if ((response = archive_read_open_filename(archive, archivePath.c_str(), BLOCK_SIZE)) != ARCHIVE_OK) {
         throw std::runtime_error(archive_error_string(archive));
-        return std::vector<std::vector<char> >();
+        return std::vector<std::vector<char>>();
     }
 
     while ((response = archive_read_next_header(archive, &entry)) != ARCHIVE_EOF) {
         std::vector<char> current;
         if (response < ARCHIVE_WARN) {
             throw std::runtime_error(archive_error_string(archive));
-            return std::vector<std::vector<char> >();
+            return std::vector<std::vector<char>>();
         } else if (archive_entry_size(entry) > 0) {
             const void* buffer;
             size_t size;
@@ -373,7 +374,7 @@ std::vector<std::vector<char> > extractBuffer(std::string archivePath) {
             while ((response = archive_read_data_block(archive, &buffer, &size, &offset)) != ARCHIVE_EOF) {
                 if (response < ARCHIVE_OK) {
                     throw std::runtime_error(archive_error_string(archive));
-                    return std::vector<std::vector<char> >();
+                    return std::vector<std::vector<char>>();
                 }
                 totalsize += size;
                 if (size > 0) {
@@ -387,23 +388,25 @@ std::vector<std::vector<char> > extractBuffer(std::string archivePath) {
     return output;
 }
 
-bool appendBuffer(std::vector<std::string> fileNames, std::vector<std::vector<char> > fileData, std::vector<size_t> fileSizes, std::string archivePath) {
-    std::vector<std::vector<char> > contentData = extractBuffer(archivePath);
+bool appendBuffer(std::vector<std::string> fileNames, std::vector<std::vector<char>> fileData, std::vector<size_t> fileSizes, std::string archivePath) {
+    std::vector<std::vector<char>> contentData = extractBuffer(archivePath);
     std::vector<metadata_t> contentMeta = view(archivePath);
-    rename(archivePath.c_str(),(archivePath+std::string(".tmp")).c_str());
+    rename(archivePath.c_str(), (archivePath + std::string(".tmp")).c_str());
 
     for (int i = 0; i < contentMeta.size(); i++) {
-        fileData.push_back(contentData[i]);
-        fileNames.push_back(contentMeta[i].name);
-        fileSizes.push_back((size_t)contentMeta[i].size);
+        if (std::find(fileNames.begin(), fileNames.end(), contentMeta[i].name) == fileNames.end()) {
+            fileData.push_back(contentData[i]);
+            fileNames.push_back(contentMeta[i].name);
+            fileSizes.push_back((size_t)contentMeta[i].size);
+        }
     }
     return writeBuffer(fileNames, fileData, fileSizes, archivePath);
 }
 
-std::vector<std::vector<char> > createFileBuffers(std::vector<std::string> fileNames){
+std::vector<std::vector<char>> createFileBuffers(std::vector<std::string> fileNames) {
     char* buff;
     int len;
-    std::vector<std::vector<char> > output;
+    std::vector<std::vector<char>> output;
     std::ifstream is;
     for (int i = 0; i < fileNames.size(); i++) {
         std::vector<std::string> path = split(fileNames[i].c_str(), '/');
@@ -418,42 +421,59 @@ std::vector<std::vector<char> > createFileBuffers(std::vector<std::string> fileN
 
             buff = new char[len];
             is.read(buff, len);
-            current = cat(current,(char*)buff,len);
+            current = cat(current, (char*)buff, len);
             output.push_back(current);
             is.close();
         } else {
             is.close();
             throw std::runtime_error("Falied to open: " + fileNames[i]);
-            return std::vector<std::vector<char> >();
+            return std::vector<std::vector<char>>();
         }
     }
     return output;
 }
 
 bool appendLocal(std::vector<std::string> newFiles, std::string archivePath) {
-    std::vector<std::vector<char> > fileData = createFileBuffers(newFiles);
+    std::vector<std::vector<char>> fileData = createFileBuffers(newFiles);
 
     struct stat st;
     std::vector<size_t> fileSizes;
-    for(int i=0;i<fileData.size();i++){
-        stat(newFiles[i].c_str(),&st);
+    for (int i = 0; i < fileData.size(); i++) {
+        stat(newFiles[i].c_str(), &st);
         fileSizes.push_back(st.st_size);
     }
 
     std::vector<std::string> fileNames;
-    for(int i=0;i<newFiles.size();i++){
-        fileNames.push_back(split(newFiles[i].c_str(),'/').back());
+    for (int i = 0; i < newFiles.size(); i++) {
+        fileNames.push_back(split(newFiles[i].c_str(), '/').back());
     }
 
-    std::vector<std::vector<char> > contentData = extractBuffer(archivePath);
+    std::vector<std::vector<char>> contentData = extractBuffer(archivePath);
     std::vector<metadata_t> contentMeta = view(archivePath);
 
-    rename(archivePath.c_str(),(archivePath+std::string(".tmp")).c_str());
+    rename(archivePath.c_str(), (archivePath + std::string(".tmp")).c_str());
 
     for (int i = 0; i < contentMeta.size(); i++) {
         fileData.push_back(contentData[i]);
         fileNames.push_back(contentMeta[i].name);
         fileSizes.push_back((size_t)contentMeta[i].size);
+    }
+    return writeBuffer(fileNames, fileData, fileSizes, archivePath);
+}
+
+bool removeFiles(std::vector<std::string> internalPaths, std::string archivePath) {
+    std::vector<std::vector<char>> contentData = extractBuffer(archivePath);
+    std::vector<metadata_t> contentMeta = view(archivePath);
+    std::vector<std::string> fileNames;
+    std::vector<std::vector<char>> fileData;
+    std::vector<size_t> fileSizes;
+
+    for (int i = 0; i < contentMeta.size(); i++) {
+        if (std::find(internalPaths.begin(), internalPaths.end(), contentMeta[i].name) == internalPaths.end()) {
+            fileData.push_back(contentData[i]);
+            fileNames.push_back(contentMeta[i].name);
+            fileSizes.push_back((size_t)contentMeta[i].size);
+        }
     }
     return writeBuffer(fileNames, fileData, fileSizes, archivePath);
 }
@@ -542,13 +562,13 @@ class WriteWorker : public Nan::AsyncWorker {
 class WriteBufferWorker : public Nan::AsyncWorker {
   private:
     std::vector<std::string> fileNames;
-    std::vector<std::vector<char> > fileData;
+    std::vector<std::vector<char>> fileData;
     std::vector<size_t> fileSizes;
     std::string archivePath;
     bool outcome;
 
   public:
-    WriteBufferWorker(Callback* callback, std::vector<std::string> fileNames, std::vector<std::vector<char> > fileData, std::vector<size_t> fileSizes, std::string archivePath)
+    WriteBufferWorker(Callback* callback, std::vector<std::string> fileNames, std::vector<std::vector<char>> fileData, std::vector<size_t> fileSizes, std::string archivePath)
         : AsyncWorker(callback) {
         this->fileNames = fileNames;
         this->fileData = fileData;
@@ -675,7 +695,7 @@ class AppendWorker : public Nan::AsyncWorker {
     void Execute() {
         try {
             outcome = appendLocal(newFiles, archivePath);
-            remove((archivePath+std::string(".tmp")).c_str());
+            remove((archivePath + std::string(".tmp")).c_str());
         } catch (std::exception& e) {
             this->SetErrorMessage(e.what());
         }
@@ -701,13 +721,13 @@ class AppendWorker : public Nan::AsyncWorker {
 class AppendBufferWorker : public Nan::AsyncWorker {
   private:
     std::vector<std::string> fileNames;
-    std::vector<std::vector<char> > fileData;
+    std::vector<std::vector<char>> fileData;
     std::vector<size_t> fileSizes;
     std::string archivePath;
     bool outcome;
 
   public:
-    AppendBufferWorker(Callback* callback, std::vector<std::string> fileNames, std::vector<std::vector<char> > fileData, std::vector<size_t> fileSizes, std::string archivePath)
+    AppendBufferWorker(Callback* callback, std::vector<std::string> fileNames, std::vector<std::vector<char>> fileData, std::vector<size_t> fileSizes, std::string archivePath)
         : AsyncWorker(callback) {
         this->fileNames = fileNames;
         this->fileData = fileData;
@@ -718,7 +738,45 @@ class AppendBufferWorker : public Nan::AsyncWorker {
     void Execute() {
         try {
             outcome = appendBuffer(fileNames, fileData, fileSizes, archivePath);
-            remove((archivePath+std::string(".tmp")).c_str());
+            remove((archivePath + std::string(".tmp")).c_str());
+        } catch (std::exception& e) {
+            this->SetErrorMessage(e.what());
+        }
+    }
+
+    void HandleOKCallback() {
+        Nan::HandleScope scope;
+        Local<Value> argv[] = {
+            Nan::Null(),
+            Nan::New<Boolean>(outcome)};
+        callback->Call(2, argv);
+    }
+
+    void HandleErrorCallback() {
+        Nan::HandleScope scope;
+        Local<Value> argv[] = {
+            Nan::New<String>(this->ErrorMessage()).ToLocalChecked(),
+            Nan::Null()};
+        callback->Call(2, argv);
+    }
+};
+
+class RemoveWorker : public Nan::AsyncWorker {
+  private:
+    std::vector<std::string> fileNames;
+    std::string archivePath;
+    bool outcome;
+
+  public:
+    RemoveWorker(Callback* callback, std::vector<std::string> fileNames, std::string archivePath)
+        : AsyncWorker(callback) {
+        this->fileNames = fileNames;
+        this->archivePath = archivePath;
+    }
+
+    void Execute() {
+        try {
+            outcome = removeFiles(fileNames, archivePath);
         } catch (std::exception& e) {
             this->SetErrorMessage(e.what());
         }
@@ -747,15 +805,15 @@ class AppendBufferWorker : public Nan::AsyncWorker {
 
 NAN_METHOD(Content) {
     if (info.Length() != 2) {
-        Nan::ThrowError("This Takes Two Arguments");
+        Nan::ThrowError("Usage: Content(string: archivePath, function: callback)");
         return;
     }
     if (!info[0]->IsString()) {
-        Nan::ThrowError("Expected Path as First Arg");
+        Nan::ThrowError("Usage: Content(string: archivePath, function: callback)");
         return;
     }
     if (!info[1]->IsFunction()) {
-        Nan::ThrowError("Expected Callback as Second Arg");
+        Nan::ThrowError("Usage: Content(string: archivePath, function: callback)");
         return;
     }
     String::Utf8Value utf8path(info[0]->ToString());
@@ -807,14 +865,14 @@ NAN_METHOD(Create) {
             return;
         }
         std::vector<std::string> files;
-        std::vector<std::vector<char> > buffers;
+        std::vector<std::vector<char>> buffers;
         std::vector<size_t> sizes;
         for (int i = 0; i < Local<Array>::Cast(info[0])->Length(); i++) {
             files.push_back(std::string(*String::Utf8Value(Local<Array>::Cast(info[0])->Get(i))));
             sizes.push_back(node::Buffer::Length(Local<Array>::Cast(info[1])->Get(i)->ToObject()));
             std::vector<char> current;
-            for(int j=0;j<sizes[i];j++){
-                current.push_back(((const char*)node::Buffer::Data(Local<Array>::Cast(info[1])->Get(i)->ToObject()))[j]);               
+            for (int j = 0; j < sizes[i]; j++) {
+                current.push_back(((const char*)node::Buffer::Data(Local<Array>::Cast(info[1])->Get(i)->ToObject()))[j]);
             }
             buffers.push_back(current);
         }
@@ -864,14 +922,14 @@ NAN_METHOD(Append) {
             return;
         }
         std::vector<std::string> files;
-        std::vector<std::vector<char> > buffers;
+        std::vector<std::vector<char>> buffers;
         std::vector<size_t> sizes;
         for (int i = 0; i < Local<Array>::Cast(info[0])->Length(); i++) {
             files.push_back(std::string(*String::Utf8Value(Local<Array>::Cast(info[0])->Get(i))));
             sizes.push_back(node::Buffer::Length(Local<Array>::Cast(info[1])->Get(i)->ToObject()));
             std::vector<char> current;
-            for(int j=0;j<sizes[i];j++){
-                current.push_back(((const char*)node::Buffer::Data(Local<Array>::Cast(info[1])->Get(i)->ToObject()))[j]);               
+            for (int j = 0; j < sizes[i]; j++) {
+                current.push_back(((const char*)node::Buffer::Data(Local<Array>::Cast(info[1])->Get(i)->ToObject()))[j]);
             }
             buffers.push_back(current);
         }
@@ -885,11 +943,11 @@ NAN_METHOD(Append) {
 NAN_METHOD(Extract) {
     if (info.Length() == 2) {
         if (!info[0]->IsString()) {
-            Nan::ThrowError("archivePath Must be string");
+            Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
             return;
         }
         if (!info[1]->IsFunction()) {
-            Nan::ThrowError("callback Must be function");
+            Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
             return;
         }
 
@@ -898,15 +956,15 @@ NAN_METHOD(Extract) {
         Nan::AsyncQueueWorker(new ExtractWorker(callback, std::string(*ap), std::string("./")));
     } else if (info.Length() == 3) {
         if (!info[0]->IsString()) {
-            Nan::ThrowError("archivePath Must be string");
+            Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
             return;
         }
         if (!info[1]->IsString()) {
-            Nan::ThrowError("outputPath Must be string");
+            Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
             return;
         }
         if (!info[2]->IsFunction()) {
-            Nan::ThrowError("callback Must be function");
+            Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
             return;
         }
         String::Utf8Value ap(info[0]->ToString());
@@ -914,28 +972,53 @@ NAN_METHOD(Extract) {
         Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
         Nan::AsyncQueueWorker(new ExtractWorker(callback, std::string(*ap), std::string(*op)));
     } else {
-        Nan::ThrowError("Usage: Extract(archivePath, optional: outputPath, callback)");
+        Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
     }
 }
 
 NAN_METHOD(Read) {
     if (info.Length() == 3) {
         if (!info[0]->IsString()) {
-            Nan::ThrowError("internalPath Must be string");
+            Nan::ThrowError("Usage: Read(string: internalPath, string: archivePath, function: callback)");
             return;
         }
         if (!info[1]->IsString()) {
-            Nan::ThrowError("archivePath Must be string");
+            Nan::ThrowError("Usage: Read(string: internalPath, string: archivePath, function: callback)");
             return;
         }
         if (!info[2]->IsFunction()) {
-            Nan::ThrowError("callback Must be function");
+            Nan::ThrowError("Usage: Read(string: internalPath, string: archivePath, function: callback)");
             return;
         }
         Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
         Nan::AsyncQueueWorker(new ReadWorker(callback, std::string(*String::Utf8Value(info[0]->ToString())), std::string(*String::Utf8Value(info[1]->ToString()))));
     } else {
-        Nan::ThrowError("Usage: ReadBuffer(internalPath, archivePath, callback)");
+        Nan::ThrowError("Usage: Read(string: internalPath, string: archivePath, function: callback)");
+    }
+}
+
+NAN_METHOD(Remove) {
+    if (info.Length() == 3) {
+        if (!info[0]->IsArray()) {
+            Nan::ThrowError("Usage: Remove(array: filenames, string: archivePath, function: callback)");
+            return;
+        }
+        if (!info[1]->IsString()) {
+            Nan::ThrowError("Usage: Remove(array: filenames, string: archivePath, function: callback)");
+            return;
+        }
+        if (!info[2]->IsFunction()) {
+            Nan::ThrowError("Usage: Remove(array: filenames, string: archivePath, function: callback)");
+            return;
+        }
+        Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
+        std::vector<std::string> files;
+        for (int i = 0; i < Local<Array>::Cast(info[0])->Length(); i++) {
+            files.push_back(std::string(*String::Utf8Value(Local<Array>::Cast(info[0])->Get(i))));
+        }
+        Nan::AsyncQueueWorker(new RemoveWorker(callback, files, std::string(*String::Utf8Value(info[1]->ToString()))));
+    } else {
+        Nan::ThrowError("Usage: Remove(array: filenames, string: archivePath, function: callback)");
     }
 }
 
@@ -958,6 +1041,9 @@ NAN_MODULE_INIT(init) {
 
     Nan::Set(target, New<String>("Read").ToLocalChecked(),
              GetFunction(New<FunctionTemplate>(Read)).ToLocalChecked());
+
+    Nan::Set(target, New<String>("Remove").ToLocalChecked(),
+             GetFunction(New<FunctionTemplate>(Remove)).ToLocalChecked());
 }
 
 NODE_MODULE(manager, init);

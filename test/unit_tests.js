@@ -193,6 +193,22 @@ exports.testReadMemoryNotThere = function (test) {
     });
 };
 
+exports.testRemove = function(test){
+    test.expect(2);
+    ArchiveManager.Remove(['entry_1.txt'],'./test/test-write.zip',function(err,outcome){
+        test.ok(outcome,'Test Remove Outcome');
+        ArchiveManager.Content('./test/test-write.zip',function(err,files){
+            if(err){
+                console.log(err);
+                test.done();
+                return;
+            }
+            test.ok(!files.includes('entry_1.txt'));
+            test.done();
+        });
+    });
+}
+
 //7z
 exports.testRead7z = function (test) {
     test.expect(30);
