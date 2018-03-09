@@ -11,6 +11,9 @@
     "nan": "^2.8.0"
   },
   "scripts": {
-    "test": "nodeunit ./test/unit_tests.js"
+    "test": "node ./test/tests.js"
+  },
+  "devDependencies": {
+    "tape": "^4.9.0"
   }
 }

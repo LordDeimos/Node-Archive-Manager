@@ -1,0 +1,143 @@
+const test = require('tape');
+const ArchiveManager = require('../build/Release/manager');
+
+/**
+ * Test Plan
+ * 
+ * Content
+ *  -   ~~Test Content returns an array
+ *  -   ~~Test size of returned array
+ *  -   ~~Test file names are correct
+ *  -   ~~Test sizes are correct
+ *  -   Test the directory flag for a file
+ *  -    "    "     "       "    "  " directory
+ *  -    "    "     "       "    "  " file in a directory
+ *  -   Test if exception is thrown when the archive is not present
+ *  -    "    "     "      "    "     "   "     "    "  corrupt
+ *  -   Test exception is thrown when input args are wrong
+ * 
+ * Create
+ *  -   Test outcome is true when path is correct
+ *  -   Test test exception is the path is incorrect
+ *  -   Test content is correct:
+ *          -   Names
+ *          -   Sizes
+ *  -   Test exception when new files are wrong:
+ *          -   path
+ *          -   type of arg
+ *          -   type of element
+ *          -   undefined
+ *  -   create with one file
+ *  -   create with multiple files
+ *  -   what happens when archive already exists
+ *  
+ * Extract
+ *  -   Outcome is true
+ *  -   Exception when path is wrong
+ *  -   Exception when archive is corrupt
+ *  -   Extracted files are not corrupt:
+ *          -   Names
+ *          -   Sizes
+ *  -   Folder structure is preserved
+ * 
+ * Read
+ *  -   Data is preserved (text can be read)
+ *  -   Json is parseable
+ *  -   Exception when archive path is wrong
+ *  -   Excpetion when wanted file name is wrong/not present
+ *  -   Excepction when archive is corrupt
+ * 
+ * Append
+ *  -   outcome is true
+ *  -   Data is written
+ *  -   Written data is not corrupt
+ *  -   append one file
+ *          -   Disk
+ *          -   Buffer
+ *  -   append multiple files
+ *          -   Disk
+ *          -   Buffers
+ *  -   Exception is thrown when archive is not there
+ *  -   Exception when archive corrupt
+ *  -   Exception when data is corrupt
+ *          -   Corrupt file
+ *          -   Corrupt buffer
+ * 
+ * Remove
+ *  -   File is removed
+ *  -   outcome is true
+ *  -   exception when file is not there
+ *  -   exception when archive is not there
+ *  -   exception when arhive is corrupt
+ */
+
+//Content
+
+test('Content Returns Array', (t) => {
+    t.plan(2);
+    ArchiveManager.Content('./test/test-zip.zip', (error, files) => {
+        t.error(error);
+        t.ok(Array.isArray(files));
+    });
+});
+
+test('Content Return Array Size', (t) => {
+    t.plan(2);
+    ArchiveManager.Content('./test/test-zip.zip', (error, files) => {
+        t.error(error);
+        t.equal(files.length,10);
+    });
+});
+
+test('Content Return Array File Names', (t) => {
+    t.plan(11);
+    ArchiveManager.Content('./test/test-zip.zip', (error, files) => {
+        t.error(error);
+        var expected = [
+            'entry_1.txt',
+            'entry_2.txt',
+            'entry_3.txt',
+            'entry_4.txt',
+            'entry_5.txt',
+            'entry_6.txt',
+            'entry_7.txt',
+            'entry_8.txt',
+            'entry_9.txt',
+            'entry_10.txt',
+        ];
+        files.forEach((element) => {
+            var index = expected.indexOf(element.name);
+            t.notEqual(index,-1);
+            expected.splice(index,1);
+        });
+    });
+});
+
+test('Content Return Array File Sizes', (t) => {
+    t.plan(11);
+    ArchiveManager.Content('./test/test-zip.zip', (error, files) => {
+        t.error(error);
+        files.forEach((element) => {
+            t.equal(element.size,5315);
+        });
+    });
+});
+
+test('Content Return Array File Flags', (t) => {
+    t.plan(11);
+    ArchiveManager.Content('./test/test-zip.zip', (error, files) => {
+        t.error(error);
+        files.forEach((element) => {
+            t.notOk(element.directory);
+        });
+    });
+});
+
+test('Content Exception Archive Not Present', (t) => {
+    t.plan(1);
+    ArchiveManager.Content('./test/test-not-here.zip', (error, files) => {
+        if(error){
+            t.pass("Error was thrown");
+        }
+    });
+});
