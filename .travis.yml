@@ -15,6 +15,13 @@ before_install:
 - eval "CC=gcc-7 && CXX=g++-7"
 - sudo apt-get update
 - sudo apt-get install libarchive-dev
+- yarn global add node-gyp
+
+install:
+- yarn install --ignore-scripts
+
+script:
+- node-gyp rebuild
 
 after_success:
 - yarn test
