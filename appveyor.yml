@@ -6,12 +6,10 @@ image: Visual Studio 2017
 
 install:
   - ps: Install-Product node 4
-  - npm install -g npm@next
-  - npm install
-  - npm install -g nodeunit
+  - yarn install
 
 build_script:
-  - npm rebuild
+  - node-gyp rebuild
 
 test_script:
-  - cmd: npm test
+  - cmd: yarn test

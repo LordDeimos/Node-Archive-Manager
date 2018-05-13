@@ -2,7 +2,7 @@ sudo: required
 language:
 - node_js
 - c++
-node_js: '0.10'
+node_js: '4'
 
 addons:
   apt:
@@ -15,7 +15,6 @@ before_install:
 - eval "CC=gcc-7 && CXX=g++-7"
 - sudo apt-get update
 - sudo apt-get install libarchive-dev
-- npm install -g nodeunit
 
 dist: trusty
 
