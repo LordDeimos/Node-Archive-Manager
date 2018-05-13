@@ -804,16 +804,17 @@ class RemoveWorker : public Nan::AsyncWorker {
 #pragma region //Wrappers
 
 NAN_METHOD(Content) {
+    const char* error_msg = "Usage: Content(string: archivePath, function: callback)";
     if (info.Length() != 2) {
-        Nan::ThrowError("Usage: Content(string: archivePath, function: callback)");
+        Nan::ThrowError(error_msg);
         return;
     }
     if (!info[0]->IsString()) {
-        Nan::ThrowError("Usage: Content(string: archivePath, function: callback)");
+        Nan::ThrowError(error_msg);
         return;
     }
     if (!info[1]->IsFunction()) {
-        Nan::ThrowError("Usage: Content(string: archivePath, function: callback)");
+        Nan::ThrowError(error_msg);
         return;
     }
     String::Utf8Value utf8path(info[0]->ToString());
@@ -823,17 +824,18 @@ NAN_METHOD(Content) {
 }
 
 NAN_METHOD(Create) {
+    const char* error_msg = "Usage: Create(array: fileNames, ?array: buffers, string: archivePath, function: callback)";
     if (info.Length() == 3) {
         if (!info[0]->IsArray()) {
-            Nan::ThrowError("Usage: Create(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[1]->IsString()) {
-            Nan::ThrowError("Usage: Create(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[2]->IsFunction()) {
-            Nan::ThrowError("Usage: Create(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
@@ -846,22 +848,26 @@ NAN_METHOD(Create) {
         }
         String::Utf8Value val(info[1]->ToString());
         std::string archivePath(*val);
+        if(strlen(archivePath.c_str())==0){
+            Nan::ThrowError(error_msg);
+            return;
+        }
         Nan::AsyncQueueWorker(new WriteWorker(callback, files, archivePath));
     } else if (info.Length() == 4) {
         if (!info[0]->IsArray()) {
-            Nan::ThrowError("Usage: Create(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[1]->IsArray()) {
-            Nan::ThrowError("Usage: Create(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[2]->IsString()) {
-            Nan::ThrowError("Usage: Create(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[3]->IsFunction()) {
-            Nan::ThrowError("Usage: Create(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         std::vector<std::string> files;
@@ -880,22 +886,23 @@ NAN_METHOD(Create) {
         Callback* callback = new Callback(Nan::To<Function>(info[3]).ToLocalChecked());
         Nan::AsyncQueueWorker(new WriteBufferWorker(callback, files, buffers, sizes, std::string(*String::Utf8Value(info[2]->ToString()))));
     } else {
-        Nan::ThrowError("Usage: Create(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+        Nan::ThrowError(error_msg);
     }
 }
 
 NAN_METHOD(Append) {
+    const char* error_msg = "Usage: Append(array: fileNames, ?array: buffers, string: archivePath, function: callback)";
     if (info.Length() == 3) {
         if (!info[0]->IsArray()) {
-            Nan::ThrowError("Usage: Append(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[1]->IsString()) {
-            Nan::ThrowError("Usage: Append(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[2]->IsFunction()) {
-            Nan::ThrowError("Usage: Append(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
@@ -906,19 +913,19 @@ NAN_METHOD(Append) {
         Nan::AsyncQueueWorker(new AppendWorker(callback, newFiles, std::string(*String::Utf8Value(info[1]->ToString()))));
     } else if (info.Length() == 4) {
         if (!info[0]->IsArray()) {
-            Nan::ThrowError("Usage: Append(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[1]->IsArray()) {
-            Nan::ThrowError("Usage: Append(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[2]->IsString()) {
-            Nan::ThrowError("Usage: Append(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[3]->IsFunction()) {
-            Nan::ThrowError("Usage: Append(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         std::vector<std::string> files;
@@ -936,18 +943,19 @@ NAN_METHOD(Append) {
         Callback* callback = new Callback(Nan::To<Function>(info[3]).ToLocalChecked());
         Nan::AsyncQueueWorker(new AppendBufferWorker(callback, files, buffers, sizes, std::string(*String::Utf8Value(info[2]->ToString()))));
     } else {
-        Nan::ThrowError("Usage: Append(array: fileNames, ?array: buffers, string: archivePath, function: callback)");
+        Nan::ThrowError(error_msg);
     }
 }
 
 NAN_METHOD(Extract) {
+    const char* error_msg = "Usage: Extract(string: archivePath, string?: outputPath, function: callback)";
     if (info.Length() == 2) {
         if (!info[0]->IsString()) {
-            Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[1]->IsFunction()) {
-            Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
 
@@ -956,15 +964,15 @@ NAN_METHOD(Extract) {
         Nan::AsyncQueueWorker(new ExtractWorker(callback, std::string(*ap), std::string("./")));
     } else if (info.Length() == 3) {
         if (!info[0]->IsString()) {
-            Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[1]->IsString()) {
-            Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[2]->IsFunction()) {
-            Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         String::Utf8Value ap(info[0]->ToString());
@@ -972,43 +980,45 @@ NAN_METHOD(Extract) {
         Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
         Nan::AsyncQueueWorker(new ExtractWorker(callback, std::string(*ap), std::string(*op)));
     } else {
-        Nan::ThrowError("Usage: Extract(string: archivePath, string?: outputPath, function: callback)");
+        Nan::ThrowError(error_msg);
     }
 }
 
 NAN_METHOD(Read) {
+    const char* error_msg = "Usage: Read(string: internalPath, string: archivePath, function: callback)";
     if (info.Length() == 3) {
         if (!info[0]->IsString()) {
-            Nan::ThrowError("Usage: Read(string: internalPath, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[1]->IsString()) {
-            Nan::ThrowError("Usage: Read(string: internalPath, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[2]->IsFunction()) {
-            Nan::ThrowError("Usage: Read(string: internalPath, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
         Nan::AsyncQueueWorker(new ReadWorker(callback, std::string(*String::Utf8Value(info[0]->ToString())), std::string(*String::Utf8Value(info[1]->ToString()))));
     } else {
-        Nan::ThrowError("Usage: Read(string: internalPath, string: archivePath, function: callback)");
+        Nan::ThrowError(error_msg);
     }
 }
 
 NAN_METHOD(Remove) {
+    const char* error_msg = "Usage: Remove(array: filenames, string: archivePath, function: callback)";
     if (info.Length() == 3) {
         if (!info[0]->IsArray()) {
-            Nan::ThrowError("Usage: Remove(array: filenames, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[1]->IsString()) {
-            Nan::ThrowError("Usage: Remove(array: filenames, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         if (!info[2]->IsFunction()) {
-            Nan::ThrowError("Usage: Remove(array: filenames, string: archivePath, function: callback)");
+            Nan::ThrowError(error_msg);
             return;
         }
         Callback* callback = new Callback(Nan::To<Function>(info[2]).ToLocalChecked());
@@ -1018,7 +1028,7 @@ NAN_METHOD(Remove) {
         }
         Nan::AsyncQueueWorker(new RemoveWorker(callback, files, std::string(*String::Utf8Value(info[1]->ToString()))));
     } else {
-        Nan::ThrowError("Usage: Remove(array: filenames, string: archivePath, function: callback)");
+        Nan::ThrowError(error_msg);
     }
 }
 
