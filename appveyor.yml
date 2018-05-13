@@ -8,8 +8,5 @@ install:
   - ps: Install-Product node 4
   - yarn install
 
-build_script:
-  - node-gyp rebuild
-
 test_script:
   - cmd: yarn test
