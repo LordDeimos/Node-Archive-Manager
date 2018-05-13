@@ -1,20 +1,19 @@
 # Node-Archive-Manager
 [![Build Status](https://travis-ci.org/LordDeimos/Node-Archive-Manager.svg?branch=master)](https://travis-ci.org/LordDeimos/Node-Archive-Manager)
-[![Build status](https://ci.appveyor.com/api/projects/status/9p5qxv6vqd539iyo?svg=true)](https://ci.appveyor.com/project/LordDeimos/node-archive-manager)
+[![Build status](https://ci.appveyor.com/api/projects/status/9p5qxv6vqd539iyo/branch/master?svg=true)](https://ci.appveyor.com/project/LordDeimos/node-archive-manager)
 [![NPM Version](https://img.shields.io/npm/v/archive-manager.svg)](https://www.npmjs.com/package/archive-manager)
 [![License](https://img.shields.io/github/license/LordDeimos/Node-Archive-Manager.svg)](https://github.com/LordDeimos/Node-Archive-Manager/blob/master/LICENSE)
 
 A Node.js plugin to manipulate archive files using C++ and [libarchive](https://www.libarchive.org/)
 
 ## Installation
+This requires node-gyp to compile, you can get it [here](https://github.com/nodejs/node-gyp).
+*There are some quirks to installing node-gyp for windows, please follow the instructions in the link carefully*
+
 As per usual, use your node package manager of choice to install this in your project:
 ```sh
-npm install archive-manager
+yarn install archive-manager
 ```
-*There are some quirks to installing node-gyp, there are very required for windows*
-
-You can get node-gyp [here](https://github.com/nodejs/node-gyp).
-
 ## Usage
 Here is a basic use case:
 
@@ -48,7 +47,7 @@ For more detail view the [wiki](https://github.com/LordDeimos/Node-Archive-Manag
 ### For Windows
 The libarchive package and its dependencies are provied for both 64 and 32 bit windows, but you may need to grab some extra things for node-gyp (see above):
 ```powershell
-npm install
+yarn install
 node-gyp rebuild
 ```
 ### For Linux
@@ -59,6 +58,6 @@ sudo apt-get install libarchive-dev
 
 Then
 ```sh
-npm install
+yarn install
 node-gyp rebuild
 ```

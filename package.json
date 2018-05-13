@@ -5,7 +5,7 @@
   "author": "Alex Barnier <alexjbarnier@gmail.com>",
   "main": "index.js",
   "engines": {
-    "node": ">=0.10"
+    "node": ">=4"
   },
   "dependencies": {
     "nan": "^2.8.0"

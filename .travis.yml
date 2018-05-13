@@ -16,6 +16,9 @@ before_install:
 - sudo apt-get update
 - sudo apt-get install libarchive-dev
 
+after_success:
+- yarn test
+
 dist: trusty
 
 notifications:
