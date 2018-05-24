@@ -2,6 +2,14 @@ const test = require('tape');
 const fs = require('fs');
 const ArchiveManager = require('../build/Release/manager');
 
+var testError = (t,error)=>{
+    if(error){
+        t.pass("Error was thrown");
+        return;
+    }
+    t.fail("Error was not thrown");
+}
+
 /**
  * Test Plan
  * 
@@ -10,13 +18,10 @@ const ArchiveManager = require('../build/Release/manager');
  *  -     "    "     "       "    "  " file in a directory
  *  
  * Extract
+ *  -   Output is not corrupt
  *  -   Folder structure is preserved
  * 
  * Read
- *  -   Data is preserved (text can be read)
- *  -   Json is parseable
- *  -   Exception when archive path is wrong
- *  -   Excpetion when wanted file name is wrong/not present
  *  -   Excepction when archive is corrupt
  * 
  * Append
@@ -75,7 +80,7 @@ test('Content Return Array File Names', (t) => {
             'entry_7.txt',
             'entry_8.txt',
             'entry_9.txt',
-            'entry_10.txt',
+            "entry_10.txt"
         ];
         files.forEach((element) => {
             var index = expected.indexOf(element.name);
@@ -296,6 +301,7 @@ test("Create Exception undefined files",(t)=>{
     catch(exception){
         t.pass("Error was thrown");
     }
+    //fs.unlinkSync('./test/test-create.zip');
 });
 
 test("Create Exception undefined archive",(t)=>{
@@ -307,6 +313,7 @@ test("Create Exception undefined archive",(t)=>{
     catch(exception){
         t.pass("Error was thrown");
     }
+    //fs.unlinkSync('./test/test-create.zip');
 });
 
 /*test("Create Exception archive already exists",(t)=>{
@@ -400,38 +407,117 @@ test("Extract File Integrity Size",(t)=>{
 test("Extract Exception Corrupt",(t)=>{
     t.plan(1);
     ArchiveManager.Extract('./test/test-zip-corrupt.zip','./test/output/',(error,outcome)=>{
-        if(error){
-            t.pass("Error was thrown");
-            return;
-        }
-        t.fail("Error was not thrown");
+        testError(t,error);
     });
 });
 
 /*test("Extract Exception Missing Archive",(t)=>{
     t.plan(1);
     ArchiveManager.Extract('','./test/output/',(error,outcome)=>{
-        if(error){
-            t.pass("Error was thrown");
-            return;
-        }
-        t.fail("Error was not thrown");
+        testError(t,error);
     });
 }); This creates an infinite loop*/
 
 test("Extract Exception Missing with actuall name",(t)=>{
     t.plan(1);
     ArchiveManager.Extract('./test/test.zip','./test/output/',(error,outcome)=>{
-        if(error){
-            t.pass("Error was thrown");
-            return;
-        }
-        t.fail("Error was not thrown");
+        testError(t,error);
     });
 });
 
 //Read
 
+test("Read Text Is preserved",(t)=>{
+    t.plan(2);
+    ArchiveManager.Read("entry_1.txt","./test/test-zip.zip",(error,data)=>{
+        t.error(error);
+        var buffer = fs.readFileSync("./test/entry_1.txt");
+        t.equal(buffer.toString(),data.toString());
+    });
+});
+
+/*test("Read JSON Is preserved",(t)=>{
+    t.plan(2);
+    ArchiveManager.Read("entry_1.txt","./test/test-zip.zip",(error,data)=>{
+        t.error(error);
+        var buffer = fs.readFileSync("./test/entry_1.txt");
+        t.equal(buffer.toString(),data.toString());
+    });
+});Need a file with a json in it first*/
+
+test("Read Exception Wrong Archive",(t)=>{
+    t.plan(1);
+    ArchiveManager.Read("entry_1.txt","not_there.zip",(error,data)=>{
+        testError(t,error);
+    });
+});
+
+test("Read Missing Internal File",(t)=>{
+    t.plan(1);
+    ArchiveManager.Read("not_there.txt","test-zip.txt",(error,data)=>{
+        testError(t,error);
+    });
+});
+
 //Append
+
+/*  -   append one file from buffer
+ *  -   append multiple files
+ *          -   Disk
+ *          -   Buffers
+ *  -   Exception is thrown when archive is not there
+ *  -   Exception when archive corrupt
+ *  -   Exception when data is corrupt
+ *          -   Corrupt file
+ *          -   Corrupt buffer
+ *  -   Exception when file already exists
+ *  -   Exception wrong arg type
+ */
+
+ test("Append Outcome is True",(t)=>{
+    t.plan(2);
+    ArchiveManager.Append(["./test/entry_2.txt"],"./test/test-append.zip",(error,outcome)=>{
+        t.error(error);
+        t.ok(outcome);
+    });
+ });
+
+ test("Append Data is writen",(t)=>{
+    t.plan(4);
+    ArchiveManager.Append(["./test/entry_3.txt"],"./test/test-append.zip",(error,outcome)=>{
+        t.error(error);
+        t.ok(outcome);
+        ArchiveManager.Content("./test/test-append.zip",(error,files)=>{
+            t.error(error);
+            t.equal(files.length,3);
+        });
+    });
+ });
+
+ test("Append Data is not corrupt",(t)=>{
+    t.plan(4);
+    ArchiveManager.Append(["./test/entry_4.txt"],"./test/test-append.zip",(error,outcome)=>{
+        t.error(error);
+        t.ok(outcome);
+        var buffer = fs.readFileSync("./test/entry_4.txt");
+        ArchiveManager.Read("entry_4.txt","./test/test-append.zip",(error,data)=>{
+            t.error(error);
+            t.equal(data.toString(),buffer.toString());
+        });
+    });
+ });
+
+ test("Append Data from Buffer",(t)=>{
+    t.plan(4);    
+    var buffer = fs.readFileSync("./test/entry_5.txt");
+    ArchiveManager.Append(['entry_5.txt'],[buffer],'./test/test-append.zip',(error,outcome)=>{
+        t.error(error);
+        t.ok(outcome);
+        ArchiveManager.Content("./test/test-append.zip",(error,files)=>{
+            t.error(error);
+            t.equal(files.length,5);
+        });
+    });
+ });
 
 //Remove
