@@ -12,7 +12,7 @@ This requires node-gyp to compile, you can get it [here](https://github.com/node
 
 As per usual, use your node package manager of choice to install this in your project:
 ```sh
-yarn install archive-manager
+yarn add archive-manager
 ```
 ## Usage
 Here is a basic use case:
