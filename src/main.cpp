@@ -160,10 +160,14 @@ bool writeLocal(std::vector<std::string> files, std::string archivePath) {
     char* buff;
     int len;
 
-    std::ifstream fs;
-    fs.open(archivePath.c_str(), std::ifstream::binary);
-    if (fs.bad())
+    std::ifstream is;
+    is.open(archivePath.c_str(), std::ifstream::binary);
+    if (is.good()){
+        is.close();
+        std::cout<<"Got Here!"<<std::endl;
+        throw std::runtime_error("Archive: "+archivePath+" Already Exists");
         return false;
+    }
 
     archive = archive_write_new();
 
@@ -174,7 +178,7 @@ bool writeLocal(std::vector<std::string> files, std::string archivePath) {
         throw std::runtime_error(archive_error_string(archive));
         return false;
     }
-    std::ifstream is;
+
     for (int i = 0; i < files.size(); i++) {
         std::vector<std::string> path = split(files[i].c_str(), '/');
 
@@ -202,6 +206,11 @@ bool writeLocal(std::vector<std::string> files, std::string archivePath) {
         } else {
             is.close();
             archive_entry_free(entry);
+            if (archive_write_close(archive) != ARCHIVE_OK) {
+                throw std::runtime_error(archive_error_string(archive));
+                return false;
+            }
+            archive_write_free(archive);
             throw std::runtime_error("Falied to open: " + files[i]);
             return false;
         }
@@ -319,6 +328,14 @@ bool writeBuffer(std::vector<std::string> fileNames, std::vector<std::vector<cha
     archive_t archive;
     archive_entry_t entry;
 
+    std::ifstream is;
+    is.open(archivePath.c_str(), std::ifstream::binary);
+    if (is.good()){
+        is.close();
+        throw std::runtime_error("Archive: "+archivePath+" Already Exists");
+        return false;
+    }
+
     archive = archive_write_new();
 
     //archive_write_set_format_filter_by_ext(archive,archivePath.c_str());// only for libarchive >=3.2
@@ -400,6 +417,7 @@ bool appendBuffer(std::vector<std::string> fileNames, std::vector<std::vector<ch
 
     for (metadata_t data : contentMeta) {
         if (std::find(fileNames.begin(), fileNames.end(), data.name) != fileNames.end()) {
+            throw std::runtime_error("Falied to Add File: "+data.name+" Already Exists in Archive: "+archivePath);
             return false;
         }
     }
@@ -464,6 +482,13 @@ bool appendLocal(std::vector<std::string> newFiles, std::string archivePath) {
     std::vector<std::vector<char>> contentData = extractBuffer(archivePath);
     std::vector<metadata_t> contentMeta = view(archivePath);
 
+    for (metadata_t data : contentMeta) {
+        if (std::find(fileNames.begin(), fileNames.end(), data.name) != fileNames.end()) {
+            throw std::runtime_error("Falied to Add File: "+data.name+" Already Exists in Archive: "+archivePath);
+            return false;
+        }
+    }
+
     rename(archivePath.c_str(), (archivePath + std::string(".tmp")).c_str());
 
     for (int i = 0; i < contentMeta.size(); i++) {
@@ -480,6 +505,8 @@ bool removeFiles(std::vector<std::string> internalPaths, std::string archivePath
     std::vector<std::string> fileNames;
     std::vector<std::vector<char>> fileData;
     std::vector<size_t> fileSizes;
+
+    rename(archivePath.c_str(), (archivePath + std::string(".tmp")).c_str());
 
     for (int i = 0; i < contentMeta.size(); i++) {
         if (std::find(internalPaths.begin(), internalPaths.end(), contentMeta[i].name) == internalPaths.end()) {
@@ -789,7 +816,8 @@ class RemoveWorker : public Nan::AsyncWorker {
 
     void Execute() {
         try {
-            outcome = removeFiles(fileNames, archivePath);
+            outcome = removeFiles(fileNames, archivePath);            
+            remove((archivePath + std::string(".tmp")).c_str());
         } catch (std::exception& e) {
             this->SetErrorMessage(e.what());
         }

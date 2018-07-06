@@ -251,7 +251,8 @@ test("Create Exception Incorrect Files",(t)=>{
     t.plan(1);
     ArchiveManager.Create(['./test/entry_11.txt'],'./test/test-create.zip',(error,outcome)=>{
         if(error){
-            t.pass("Error was thrown");
+            t.pass("Error was thrown");            
+            fs.unlinkSync('./test/test-create.zip');
             return;
         }
         t.fail("Error was not thrown");
@@ -274,7 +275,8 @@ test("Create Exception Incorrect Type Element",(t)=>{
     t.plan(1);
     ArchiveManager.Create([1],'./test/test-create.zip',(error,outcome)=>{
         if(error){
-            t.pass("Error was thrown");
+            t.pass("Error was thrown"); 
+            fs.unlinkSync('./test/test-create.zip');     
             return;
         }            
         fs.unlinkSync('./test/test-create.zip');
@@ -308,13 +310,9 @@ test("Create Exception undefined archive",(t)=>{
 
 test("Create Exception archive already exists",(t)=>{
     t.plan(1);
-    try{
-        ArchiveManager.Create(['./test/entry_1.txt'],'./test/test-zip.zip',(error,outcome)=>{});
-        t.fail("Error was not thrown");
-    }
-    catch(exception){
-        t.pass("Error was thrown");
-    }
+    ArchiveManager.Create(['./test/entry_1.txt'],'./test/test-zip.zip',(error,outcome)=>{
+        testError(t,error);
+    });
 });
 
 //Extract
@@ -551,9 +549,13 @@ test("Remove File is Removed",(t)=>{
 });
 
 test("Remove File is Missing",(t)=>{
-    t.plan(1);
+    t.plan(3);
     ArchiveManager.Remove(["entry_3.txt"],"./test/test-remove.zip",(error,outcome)=>{
-        testError(t,error);
+        t.error(error);
+        ArchiveManager.Content("./test/test-remove.zip",(error,files)=>{
+            t.equal(files.length,1);
+            t.equal(files[0].name,"entry_1.txt");
+        });
     });
 });
 
@@ -564,7 +566,7 @@ test("Remove Archive is Missing",(t)=>{
     });
 });
 
-test("Remove File is Missing",(t)=>{
+test("Remove Corrupt Archive",(t)=>{
     t.plan(1);
     ArchiveManager.Remove(["entry_3.txt"],"./test/test-corrupt.zip",(error,outcome)=>{
         testError(t,error);
