@@ -25,18 +25,10 @@ var testError = (t,error)=>{
  *  -   Excepction when archive is corrupt
  * 
  * Append
- *  -   outcome is true
- *  -   Data is written
- *  -   Written data is not corrupt
- *  -   append one file
- *          -   Disk
- *          -   Buffer
  *  -   append multiple files
  *          -   Disk
  *          -   Buffers
- *  -   Exception is thrown when archive is not there
- *  -   Exception when archive corrupt
- *  -   Exception when data is corrupt
+ *  -   Exception when data is corrupt can I test for this though?
  *          -   Corrupt file
  *          -   Corrupt buffer
  * 
@@ -122,9 +114,7 @@ test('Content Exception Archive Not Present', (t) => {
 test('Content Exception Archive Corrupt', (t) => {
     t.plan(1);
     ArchiveManager.Content('./test/test-zip-corrupt.zip', (error, files) => {
-        if(error){
-            t.pass("Error was thrown");
-        }
+        testError(t,error);
     });
 });
 
@@ -461,19 +451,6 @@ test("Read Missing Internal File",(t)=>{
 
 //Append
 
-/*  -   append one file from buffer
- *  -   append multiple files
- *          -   Disk
- *          -   Buffers
- *  -   Exception is thrown when archive is not there
- *  -   Exception when archive corrupt
- *  -   Exception when data is corrupt
- *          -   Corrupt file
- *          -   Corrupt buffer
- *  -   Exception when file already exists
- *  -   Exception wrong arg type
- */
-
  test("Append Outcome is True",(t)=>{
     t.plan(2);
     ArchiveManager.Append(["./test/entry_2.txt"],"./test/test-append.zip",(error,outcome)=>{
@@ -482,7 +459,7 @@ test("Read Missing Internal File",(t)=>{
     });
  });
 
- test("Append Data is writen",(t)=>{
+ test("Append Data is Written",(t)=>{
     t.plan(4);
     ArchiveManager.Append(["./test/entry_3.txt"],"./test/test-append.zip",(error,outcome)=>{
         t.error(error);
@@ -494,7 +471,7 @@ test("Read Missing Internal File",(t)=>{
     });
  });
 
- test("Append Data is not corrupt",(t)=>{
+ test("Append Data is not Corrupt",(t)=>{
     t.plan(4);
     ArchiveManager.Append(["./test/entry_4.txt"],"./test/test-append.zip",(error,outcome)=>{
         t.error(error);
@@ -520,4 +497,76 @@ test("Read Missing Internal File",(t)=>{
     });
  });
 
+test("Append Exception Missing Archive",(t)=>{
+    t.plan(1);
+    ArchiveManager.Append(['./test/entry_1.txt'],'./test/not-here.zip',(error,outcome)=>{
+        testError(t,error);
+    });
+});
+
+test("Append Corrupt Archive",(t)=>{
+    t.plan(1);
+    ArchiveManager.Append(["./test/extry_1.zip"],"./test/test-zip-corrupt.zip",(error,outcome)=>{
+        testError(t,error);
+    });
+});
+
+test("Append Existing File",(t)=>{
+    t.plan(1);
+    ArchiveManager.Append(["./test/entry_1.txt"],"./test/test-append.zip",(error,outcome)=>{
+        testError(t,error);
+    });
+});
+
+test("Append Wrong Arg Type",(t)=>{
+    t.plan(1);
+    try{
+        ArchiveManager.Append('./test/entry_1.txt','./test/test-append.zip',(error,outcome)=>{});
+        t.fail("Error was not thrown");
+    }
+    catch(exception){
+        t.pass("Error was thrown");
+    }
+});
+
 //Remove
+
+test("Remove Outcome",(t)=>{
+    t.plan(2);
+    ArchiveManager.Remove(["entry_2.txt"],"./test/test-remove.zip",(error,outcome)=>{
+        t.error(error);
+        t.ok(outcome);
+    });
+});
+
+test("Remove File is Removed",(t)=>{
+    t.plan(3);
+    ArchiveManager.Remove(["entry_3.txt"],"./test/test-remove.zip",(error,outcome)=>{
+        t.error(error);
+        ArchiveManager.Content("./test/test-remove.zip",(error,files)=>{
+            t.equal(files.length,1);
+            t.equal(files[0].name,"entry_1.txt");
+        });
+    });
+});
+
+test("Remove File is Missing",(t)=>{
+    t.plan(1);
+    ArchiveManager.Remove(["entry_3.txt"],"./test/test-remove.zip",(error,outcome)=>{
+        testError(t,error);
+    });
+});
+
+test("Remove Archive is Missing",(t)=>{
+    t.plan(1);
+    ArchiveManager.Remove(["entry_3.txt"],"./test/test-not-there.zip",(error,outcome)=>{
+        testError(t,error);
+    });
+});
+
+test("Remove File is Missing",(t)=>{
+    t.plan(1);
+    ArchiveManager.Remove(["entry_3.txt"],"./test/test-corrupt.zip",(error,outcome)=>{
+        testError(t,error);
+    });
+});
