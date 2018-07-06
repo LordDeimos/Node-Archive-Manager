@@ -583,7 +583,6 @@ class WriteWorker : public Nan::AsyncWorker {
             outcome = writeLocal(files, archivePath);
         } catch (std::exception& e) {
             this->SetErrorMessage(e.what());
-            remove(archivePath.c_str());
         }
     }
 
@@ -626,7 +625,6 @@ class WriteBufferWorker : public Nan::AsyncWorker {
             outcome = writeBuffer(fileNames, fileData, fileSizes, archivePath);
         } catch (std::exception& e) {
             this->SetErrorMessage(e.what());
-            remove(archivePath.c_str());
         }
     }
 
