@@ -251,8 +251,7 @@ test("Create Exception Incorrect Files",(t)=>{
     t.plan(1);
     ArchiveManager.Create(['./test/entry_11.txt'],'./test/test-create.zip',(error,outcome)=>{
         if(error){
-            t.pass("Error was thrown");            
-            fs.unlinkSync('./test/test-create.zip');
+            t.pass("Error was thrown");
             return;
         }
         t.fail("Error was not thrown");
@@ -275,8 +274,7 @@ test("Create Exception Incorrect Type Element",(t)=>{
     t.plan(1);
     ArchiveManager.Create([1],'./test/test-create.zip',(error,outcome)=>{
         if(error){
-            t.pass("Error was thrown"); 
-            fs.unlinkSync('./test/test-create.zip');     
+            t.pass("Error was thrown");  
             return;
         }            
         fs.unlinkSync('./test/test-create.zip');
@@ -293,7 +291,6 @@ test("Create Exception undefined files",(t)=>{
     catch(exception){
         t.pass("Error was thrown");
     }
-    //fs.unlinkSync('./test/test-create.zip');
 });
 
 test("Create Exception undefined archive",(t)=>{
@@ -305,7 +302,6 @@ test("Create Exception undefined archive",(t)=>{
     catch(exception){
         t.pass("Error was thrown");
     }
-    //fs.unlinkSync('./test/test-create.zip');
 });
 
 test("Create Exception archive already exists",(t)=>{
