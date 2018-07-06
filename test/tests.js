@@ -306,7 +306,7 @@ test("Create Exception undefined archive",(t)=>{
     //fs.unlinkSync('./test/test-create.zip');
 });
 
-/*test("Create Exception archive already exists",(t)=>{
+test("Create Exception archive already exists",(t)=>{
     t.plan(1);
     try{
         ArchiveManager.Create(['./test/entry_1.txt'],'./test/test-zip.zip',(error,outcome)=>{});
@@ -315,7 +315,7 @@ test("Create Exception undefined archive",(t)=>{
     catch(exception){
         t.pass("Error was thrown");
     }
-}); I'm not running this test yet, because I know it will fail and I want prevent overwritting test-zip.zip*/
+});
 
 //Extract
 
