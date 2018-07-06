@@ -164,7 +164,6 @@ bool writeLocal(std::vector<std::string> files, std::string archivePath) {
     is.open(archivePath.c_str(), std::ifstream::binary);
     if (is.good()){
         is.close();
-        std::cout<<"Got Here!"<<std::endl;
         throw std::runtime_error("Archive: "+archivePath+" Already Exists");
         return false;
     }
@@ -228,6 +227,11 @@ bool extract(std::string archivePath, std::string outputPath) {
     archive_t archive, archivew;
     archive_entry_t entry;
     int response, flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_ACL | ARCHIVE_EXTRACT_FFLAGS;
+
+    if (archivePath.length()==0){
+        throw std::runtime_error("Must Specify a File");
+        return false;
+    }
 
     archive = archive_read_new();
     archive_read_support_format_all(archive);

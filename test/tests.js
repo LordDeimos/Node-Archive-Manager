@@ -399,12 +399,12 @@ test("Extract Exception Corrupt",(t)=>{
     });
 });
 
-/*test("Extract Exception Missing Archive",(t)=>{
+test("Extract Exception Missing Archive",(t)=>{
     t.plan(1);
     ArchiveManager.Extract('','./test/output/',(error,outcome)=>{
         testError(t,error);
     });
-}); This creates an infinite loop*/
+});
 
 test("Extract Exception Missing with actuall name",(t)=>{
     t.plan(1);
